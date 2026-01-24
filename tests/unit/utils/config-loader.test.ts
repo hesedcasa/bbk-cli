@@ -10,7 +10,7 @@ describe('config-loader', () => {
 
   beforeEach(() => {
     // Create a temporary directory for test configs
-    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'conni-cli-test-'));
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-test-'));
     fs.mkdirSync(path.join(testDir, '.claude'));
   });
 
@@ -24,11 +24,11 @@ describe('config-loader', () => {
       const configContent = `---
 profiles:
   cloud:
-    username: user@example.com
-    password: app_password_here
+    email: user@example.com
+    apiToken: app_token_here
   staging:
-    username: staging@example.com
-    token: staging_token_here
+    email: staging@example.com
+    apiToken: staging_token_here
 
 defaultProfile: cloud
 defaultFormat: json
@@ -44,11 +44,11 @@ defaultFormat: json
 
       expect(config.profiles).toBeDefined();
       expect(config.profiles.cloud).toBeDefined();
-      expect(config.profiles.cloud.username).toBe('user@example.com');
-      expect(config.profiles.cloud.password).toBe('app_password_here');
+      expect(config.profiles.cloud.email).toBe('user@example.com');
+      expect(config.profiles.cloud.apiToken).toBe('app_token_here');
 
       expect(config.profiles.staging).toBeDefined();
-      expect(config.profiles.staging.token).toBe('staging_token_here');
+      expect(config.profiles.staging.apiToken).toBe('staging_token_here');
 
       expect(config.defaultProfile).toBe('cloud');
       expect(config.defaultFormat).toBe('json');
@@ -86,25 +86,26 @@ defaultProfile: cloud
       const configContent = `---
 profiles:
   incomplete:
-    username: test
-    # Missing password (when using username auth)
+    email: test@example.com
+    # Missing apiToken
 ---
 `;
 
       const configPath = path.join(testDir, '.claude', 'bitbucket-config.local.md');
       fs.writeFileSync(configPath, configContent);
 
-      expect(() => loadConfig(testDir)).toThrow('must have either "token" or both "username" and "password"');
+      expect(() => loadConfig(testDir)).toThrow('must have both "email" and "apiToken"');
     });
 
     it('should use first profile as default if defaultProfile not specified', () => {
       const configContent = `---
 profiles:
   first:
-    username: first@example.com
-    password: first_password
+    email: first@example.com
+    apiToken: first_token
   second:
-    token: second_token
+    email: second@example.com
+    apiToken: second_token
 ---
 `;
 
@@ -120,8 +121,8 @@ profiles:
       const configContent = `---
 profiles:
   cloud:
-    username: user@example.com
-    password: password_here
+    email: user@example.com
+    apiToken: token_here
 ---
 `;
 
@@ -140,7 +141,8 @@ profiles:
         const configContent = `---
 profiles:
   cloud:
-    token: token_here
+    email: user@example.com
+    apiToken: token_here
 defaultFormat: ${format}
 ---
 `;

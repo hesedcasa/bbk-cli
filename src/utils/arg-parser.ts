@@ -51,24 +51,24 @@ export const parseArguments = async (args: string[]): Promise<boolean> => {
  */
 const printGeneralHelp = (): void => {
   console.log(`
-Confluence CLI
+Bitbucket CLI
 
 Usage:
 
-npx conni-cli                             start interactive CLI
-npx conni-cli --commands                  list all available commands
-npx conni-cli <command> -h                quick help on <command>
-npx conni-cli <command> <arg>             run command in headless mode
+npx bbk-cli                               start interactive CLI
+npx bbk-cli --commands                    list all available commands
+npx bbk-cli <command> -h                  quick help on <command>
+npx bbk-cli <command> <arg>               run command in headless mode
 
 All commands:
 
 ${COMMANDS.join(', ')}
 
 Examples:
-  npx conni-cli list-spaces
-  npx conni-cli get-page '{"pageId":"123456"}'
-  npx conni-cli list-pages '{"spaceKey":"DOCS","limit":10}'
-  npx conni-cli test-connection
+  npx bbk-cli list-repositories '{"workspace":"myworkspace"}'
+  npx bbk-cli get-repository '{"workspace":"myworkspace","repoSlug":"my-repo"}'
+  npx bbk-cli list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}'
+  npx bbk-cli test-connection
 
 `);
 };

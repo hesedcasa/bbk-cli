@@ -6,8 +6,16 @@ import yaml from 'yaml';
  * Bitbucket connection profile configuration
  */
 interface BitbucketProfile {
-  username: string;
-  password: string; // App password (Bitbucket API token)
+  email: string;
+  apiToken: string; // Bitbucket API token
+}
+
+/**
+ * Validate email format
+ */
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 /**
@@ -24,8 +32,8 @@ export interface Config {
  */
 interface BitbucketClientOptions {
   auth: {
-    username: string;
-    password: string; // App password (Bitbucket API token)
+    email: string;
+    apiToken: string; // Bitbucket API token
   };
 }
 
@@ -65,9 +73,14 @@ export function loadConfig(projectRoot: string): Config {
 
   // Validate each profile
   for (const [profileName, profile] of Object.entries(config.profiles)) {
-    // Username and password (app password) are required
-    if (!profile.username || !profile.password) {
-      throw new Error(`Profile "${profileName}" must have both "username" and "password" (app password)`);
+    // Email and apiToken are required
+    if (!profile.email || !profile.apiToken) {
+      throw new Error(`Profile "${profileName}" must have both "email" and "apiToken"`);
+    }
+
+    // Validate email format
+    if (!isValidEmail(profile.email)) {
+      throw new Error(`Profile "${profileName}" has invalid email format: "${profile.email}"`);
     }
   }
 
@@ -93,14 +106,14 @@ export function getBitbucketClientOptions(config: Config, profileName: string): 
     throw new Error(`Profile "${profileName}" not found. Available profiles: ${availableProfiles}`);
   }
 
-  if (!profile.username || !profile.password) {
-    throw new Error(`Profile "${profileName}" must have both "username" and "password" (app password)`);
+  if (!profile.email || !profile.apiToken) {
+    throw new Error(`Profile "${profileName}" must have both "email" and "apiToken"`);
   }
 
   return {
     auth: {
-      username: profile.username,
-      password: profile.password,
+      email: profile.email,
+      apiToken: profile.apiToken,
     },
   };
 }

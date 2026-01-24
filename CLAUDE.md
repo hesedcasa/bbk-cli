@@ -31,9 +31,11 @@ npm run pre-commit          # Run format + find-deadcode
 
 ## Project Architecture
 
-This is a **Confluence CLI tool** that provides both interactive REPL and headless modes for Confluence operations.
+This is a **Bitbucket CLI tool** (`bbk-cli`) that provides both interactive REPL and headless modes for Bitbucket Cloud operations using direct REST API calls with Basic authentication.
 
-### Project Structure
+### Core Architecture Pattern
+
+**No External Bitbucket Client Library**: This project implements Bitbucket API interactions directly using the native `fetch` API and Basic authentication. The `BitbucketUtil` class in `src/utils/bitbucket-utils.ts` handles all HTTP requests to `https://api.bitbucket.org/2.0`.
 
 ```
 src/
@@ -50,17 +52,23 @@ src/
 │   └── constants.ts                       # Command definitions
 └── utils/
     ├── index.ts                           # Barrel export
-    ├── arg-parser.ts                       # Command-line argument parser
+    ├── arg-parser.ts                      # Command-line argument parser
     ├── config-loader.ts                   # YAML config file loader
-    ├── confluence-client.ts               # Confluence API wrapper functions
-    └── confluence-utils.ts                # Core Confluence utility class
+    ├── bitbucket-client.ts                # Wrapper functions for Bitbucket operations
+    └── bitbucket-utils.ts                 # Core Bitbucket utility class with API calls
 
 tests/
 ├── unit/
+│   ├── cli/
+│   │   └── wrapper.test.ts
+│   ├── commands/
+│   │   ├── helpers.test.ts
+│   │   └── runner.test.ts
 │   └── utils/
-│       └── config-loader.test.ts          # Tests for config loading
+│       ├── arg-parser.test.ts
+│       └── config-loader.test.ts
 └── integration/
-    └── (integration tests)
+    └── cli-integration.test.ts
 ```
 
 ### Core Components
@@ -70,59 +78,60 @@ tests/
 - Bootstraps the application
 - Parses command-line arguments via `parseArguments()`
 - Routes to interactive REPL or headless mode
+- Headless mode: executes command and exits
+- Interactive mode: starts the `wrapper` class REPL
 
-#### CLI Module (`src/cli/`)
+#### CLI Module (`src/cli/wrapper.ts`)
 
 - **wrapper class**: Main orchestrator managing:
-  - `connect()` - Loads configuration from `.claude/atlassian-config.local.md`
+  - `connect()` - Loads configuration from `.claude/bitbucket-config.local.md`
   - `start()` - Initiates interactive REPL with readline interface
   - `handleCommand()` - Parses and processes user commands
-  - `runCommand()` - Executes Confluence commands with result formatting
+  - `runCommand()` - Executes Bitbucket commands with result formatting
   - `disconnect()` - Graceful cleanup on exit signals (SIGINT/SIGTERM)
 
 #### Commands Module (`src/commands/`)
 
 - `helpers.ts` - Display command information and help
-  - `printAvailableCommands()` - Lists all 11 available commands
+  - `printAvailableCommands()` - Lists all 13 available commands
   - `printCommandDetail(command)` - Shows detailed help for specific command
   - `getCurrentVersion()` - Reads version from package.json
 - `runner.ts` - Execute commands in headless mode
   - `runCommand(command, arg, flag)` - Non-interactive command execution
 
-#### Config Module (`src/config/`)
+#### Config Module (`src/config/constants.ts`)
 
-- `constants.ts` - Centralized configuration
-  - `COMMANDS[]` - Array of 11 available Confluence command names
-  - `COMMANDS_INFO[]` - Brief descriptions for each command
-  - `COMMANDS_DETAIL[]` - Detailed parameter documentation
+- `COMMANDS[]` - Array of 13 Bitbucket command names
+- `COMMANDS_INFO[]` - Brief descriptions for each command
+- `COMMANDS_DETAIL[]` - Detailed parameter documentation
 
 #### Utils Module (`src/utils/`)
 
 - `arg-parser.ts` - Command-line argument handling
-  - `parseArguments(args)` - Parses CLI flags and routes execution
+  - `parseArguments(args)` - Parses CLI flags (--help, --version, --commands) and routes to headless or interactive mode
 - `config-loader.ts` - Configuration file management
-  - `loadConfig(projectRoot)` - Loads `.claude/atlassian-config.local.md`
-  - `getConfluenceClientOptions(config, profileName)` - Builds confluence.js client options
-  - TypeScript interfaces: `Config`, `ConfluenceProfile`, `ConfluenceClientOptions`
-- `confluence-client.ts` - Confluence API wrapper functions
-  - Exports: `listSpaces()`, `getSpace()`, `listPages()`, `getPage()`, `createPage()`, `updatePage()`, `addComment()`, `deletePage()`, `downloadAttachment()`, `getUser()`, `testConnection()`, `clearClients()`
-  - Manages singleton `ConfluenceUtil` instance
-- `confluence-utils.ts` - Core Confluence utility class
-  - `ConfluenceUtil` class - Client pooling and API calls
-  - Implements all 11 Confluence commands
-  - Formats results as JSON or TOON
+  - `loadConfig(projectRoot)` - Loads `.claude/bitbucket-config.local.md`
+  - `getBitbucketClientOptions(config, profileName)` - Extracts email and API token for Basic auth
+  - TypeScript interfaces: `Config`, `BitbucketProfile`, `BitbucketClientOptions`
+- `bitbucket-client.ts` - Wrapper functions for all Bitbucket operations
+  - Exports: `listRepositories()`, `getRepository()`, `listPullRequests()`, `getPullRequest()`, `createPullRequest()`, `listBranches()`, `listCommits()`, `listIssues()`, `getIssue()`, `createIssue()`, `listPipelines()`, `getUser()`, `testConnection()`, `clearClients()`
+  - Manages singleton `BitbucketUtil` instance
+- `bitbucket-utils.ts` - Core Bitbucket utility class
+  - `BitbucketUtil` class - Direct REST API calls to Bitbucket v2 API
+  - Implements `makeRequest()` for authenticated HTTP requests using Basic auth
+  - `formatResult()` - Outputs JSON or TOON format
+  - Auth pooling per profile for efficiency
 
 ### Configuration System
 
-The CLI loads Confluence profiles from `.claude/atlassian-config.local.md` with YAML frontmatter:
+The CLI loads Bitbucket profiles from `.claude/bitbucket-config.local.md` with YAML frontmatter:
 
 ```yaml
 ---
 profiles:
   cloud:
-    host: https://your-domain.atlassian.net/wiki
     email: your-email@example.com
-    apiToken: YOUR_API_TOKEN_HERE
+    apiToken: YOUR_BITBUCKET_APP_PASSWORD_HERE
 
 defaultProfile: cloud
 defaultFormat: json
@@ -131,27 +140,29 @@ defaultFormat: json
 
 **Key behaviors:**
 
-- Profiles are referenced by name in commands
-- Multiple profiles support different Confluence instances (cloud, staging, etc.)
-- Configuration is validated on load with clear error messages
-- API tokens are used for authentication (basic auth)
+- Uses Bitbucket **App Passwords** (not API tokens) for authentication
+- Basic authentication header: `Authorization: Basic base64(email:apiToken)`
+- Configuration is validated on load with email format validation
+- Multi-profile support for different Bitbucket workspaces/accounts
 
 ### REPL Interface
 
-- Custom prompt: `conni>`
+- Custom prompt: `bbk>`
 - **Special commands**: `help`, `commands`, `profiles`, `profile <name>`, `format <type>`, `clear`, `exit/quit/q`
-- **Confluence commands**: 11 commands accepting JSON arguments
-  1. `list-spaces` - List all accessible spaces
-  2. `get-space` - Get details of a specific space
-  3. `list-pages` - List pages in a space or by search criteria
-  4. `get-page` - Get details of a specific page
-  5. `create-page` - Create a new page
-  6. `update-page` - Update an existing page
-  7. `add-comment` - Add a comment to a page
-  8. `delete-page` - Delete a page
-  9. `download-attachment` - Download an attachment from a page
-  10. `get-user` - Get user information
-  11. `test-connection` - Test Confluence API connection
+- **Bitbucket commands**: 13 commands accepting JSON arguments
+  1. `list-repositories` - List all repositories in a workspace
+  2. `get-repository` - Get details of a specific repository
+  3. `list-pullrequests` - List pull requests in a repository
+  4. `get-pullrequest` - Get details of a specific pull request
+  5. `create-pullrequest` - Create a new pull request (with auto-added default reviewers)
+  6. `list-branches` - List branches in a repository (with query/sort support)
+  7. `list-commits` - List commits in a repository
+  8. `list-issues` - List issues in a repository
+  9. `get-issue` - Get details of a specific issue
+  10. `create-issue` - Create a new issue
+  11. `list-pipelines` - List pipelines in a repository
+  12. `get-user` - Get user information
+  13. `test-connection` - Test Bitbucket API connection
 
 ### TypeScript Configuration
 
@@ -162,19 +173,21 @@ defaultFormat: json
 
 ## Available Commands
 
-The CLI provides **11 Confluence commands**:
+The CLI provides **13 Bitbucket commands**:
 
-1. **list-spaces** - List all accessible spaces
-2. **get-space** - Get details of a specific space
-3. **list-pages** - List pages in a space or by search criteria
-4. **get-page** - Get details of a specific page
-5. **create-page** - Create a new page
-6. **update-page** - Update an existing page
-7. **add-comment** - Add a comment to a page
-8. **delete-page** - Delete a page
-9. **download-attachment** - Download an attachment from a page
-10. **get-user** - Get user information
-11. **test-connection** - Test Confluence API connection
+1. **list-repositories** - List all repositories in a workspace
+2. **get-repository** - Get details of a specific repository
+3. **list-pullrequests** - List pull requests in a repository
+4. **get-pullrequest** - Get details of a specific pull request
+5. **create-pullrequest** - Create a new pull request
+6. **list-branches** - List branches in a repository
+7. **list-commits** - List commits in a repository
+8. **list-issues** - List issues in a repository
+9. **get-issue** - Get details of a specific issue
+10. **create-issue** - Create a new issue
+11. **list-pipelines** - List pipelines in a repository
+12. **get-user** - Get user information
+13. **test-connection** - Test Bitbucket API connection
 
 ### Command Examples
 
@@ -183,28 +196,25 @@ The CLI provides **11 Confluence commands**:
 npm start
 
 # Inside the REPL:
-conni> commands                          # List all 11 commands
-conni> help                              # Show help
-conni> profiles                          # List available profiles
-conni> profile production                # Switch profile
-conni> format json                       # Change output format
-conni> list-spaces
-conni> get-space '{"spaceKey":"DOCS"}'
-conni> list-pages '{"spaceKey":"DOCS","title":"Getting Started","limit":10}'
-conni> get-page '{"pageId":"123456"}'
-conni> create-page '{"spaceKey":"DOCS","title":"New Page","body":"<p>Hello World</p>"}'
-conni> add-comment '{"pageId":"123456","body":"<p>Great article!</p>"}'
-conni> download-attachment '{"attachmentId":"att12345","outputPath":"./document.pdf"}'
-conni> exit                              # Exit
+bbk> commands                          # List all 13 commands
+bbk> help                              # Show help
+bbk> profiles                          # List available profiles
+bbk> profile production                # Switch profile
+bbk> format json                       # Change output format
+bbk> list-repositories {"workspace":"myworkspace"}
+bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
+bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
+bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo","q":"name~\"feature\""}
+bbk> exit                              # Exit
 
 # Headless mode (one-off commands):
-npx conni-cli test-connection '{"profile":"cloud"}'
-npx conni-cli list-spaces
-npx conni-cli get-page '{"pageId":"123456","format":"json"}'
-npx conni-cli --commands        # List all commands
-npx conni-cli list-pages -h     # Command-specific help
-npx conni-cli --help            # General help
-npx conni-cli --version         # Show version
+npx bbk-cli test-connection
+npx bbk-cli list-repositories '{"workspace":"myworkspace"}'
+npx bbk-cli --commands        # List all commands
+npx bbk-cli list-pullrequests -h     # Command-specific help
+npx bbk-cli --help            # General help
+npx bbk-cli --version         # Show version
 ```
 
 ## Code Structure & Module Responsibilities
@@ -212,16 +222,16 @@ npx conni-cli --version         # Show version
 ### Entry Point (`index.ts`)
 
 - Minimal bootstrapper
-- Imports and coordinates other modules
-- Handles top-level error catching
+- Parses CLI args to determine execution mode
+- Routes to interactive REPL or headless execution
 
 ### CLI Class (`cli/wrapper.ts`)
 
-- Interactive REPL management
+- Interactive REPL management with readline
 - Configuration loading and profile switching
-- User command processing
-- Confluence command execution with result formatting
-- Graceful shutdown handling
+- User command processing and validation
+- Bitbucket command execution with result formatting
+- Graceful shutdown handling (SIGINT/SIGTERM)
 
 ### Command Helpers (`commands/helpers.ts`)
 
@@ -243,25 +253,26 @@ npx conni-cli --version         # Show version
 
 ### Config Loader (`utils/config-loader.ts`)
 
-- Reads and parses `.claude/atlassian-config.local.md`
-- Extracts YAML frontmatter with Confluence profiles
-- Validates required fields for each profile
+- Reads and parses `.claude/bitbucket-config.local.md`
+- Extracts YAML frontmatter with Bitbucket profiles
+- Validates required fields (email, apiToken) for each profile
+- Email format validation using regex
 - Provides default values for settings
-- Builds confluence.js client options
 
-### Confluence Client (`utils/confluence-client.ts`)
+### Bitbucket Client (`utils/bitbucket-client.ts`)
 
-- Wrapper functions for all Confluence operations
-- Manages singleton ConfluenceUtil instance
+- Wrapper functions for all Bitbucket operations
+- Manages singleton `BitbucketUtil` instance
 - Exports clean async functions for each command
 
-### Confluence Utils (`utils/confluence-utils.ts`)
+### Bitbucket Utils (`utils/bitbucket-utils.ts`)
 
-- Core Confluence interaction logic
-- Client pooling per profile
-- API call execution
+- **Core Bitbucket interaction logic using native fetch**
+- Client pooling per profile (auth credentials cached)
+- API call execution to `https://api.bitbucket.org/2.0`
 - Result formatting (JSON, TOON)
-- All 10 command implementations
+- All 13 command implementations
+- Basic authentication via `Authorization: Basic base64(email:apiToken)`
 
 ### Argument Parser (`utils/arg-parser.ts`)
 
@@ -271,21 +282,22 @@ npx conni-cli --version         # Show version
 
 ### Key Implementation Details
 
+- **No External Bitbucket Library**: Uses native `fetch` API with Basic auth instead of a client library
 - **Barrel Exports**: Each module directory has `index.ts` exporting public APIs
 - **ES Modules**: All imports use `.js` extensions (TypeScript requirement)
 - **Argument Parsing**: Supports JSON arguments for command parameters
-- **Client Pooling**: Reuses Confluence clients per profile for efficiency
+- **Auth Pooling**: Reuses Basic auth credentials per profile for efficiency
 - **Signal Handling**: Graceful shutdown on Ctrl+C (SIGINT) and SIGTERM
 - **Error Handling**: Try-catch blocks with user-friendly error messages
-- **Configuration**: YAML frontmatter in `.claude/atlassian-config.local.md`
+- **Configuration**: YAML frontmatter in `.claude/bitbucket-config.local.md`
 
 ## Dependencies
 
 **Runtime**:
 
-- `confluence.js@^2.1.0` - Confluence API client for Node.js
 - `yaml@^2.8.1` - YAML parser for config files
-- `@toon-format/toon@^2.0.0` - TOON format encoder
+- `@toon-format/toon@^2.0.1` - TOON format encoder
+- **No Bitbucket client library** - Uses native `fetch` with Basic auth
 
 **Development**:
 
@@ -293,7 +305,7 @@ npx conni-cli --version         # Show version
 - `tsx@^4.0.0` - TypeScript execution runtime
 - `vitest@^4.0.9` - Test framework
 - `eslint@^9.39.1` - Linting
-- `prettier@3.6.2` - Code formatting
+- `prettier@3.8.0` - Code formatting
 - `ts-prune@^0.10.3` - Find unused exports
 
 ## Testing
@@ -303,6 +315,7 @@ This project uses **Vitest** for testing with the following configuration:
 - **Test Framework**: Vitest with globals enabled
 - **Test Files**: `tests/**/*.test.ts`
 - **Coverage**: V8 coverage provider with text, JSON, and HTML reports
+- **Coverage Exclusions**: Barrel exports (`index.ts`), config files, test files
 
 ### Running Tests
 
@@ -325,21 +338,27 @@ npm run test:coverage
 ```
 tests/
 ├── unit/
+│   ├── cli/
+│   │   └── wrapper.test.ts               # REPL logic tests
+│   ├── commands/
+│   │   ├── helpers.test.ts               # Command display tests
+│   │   └── runner.test.ts                # Headless execution tests
 │   └── utils/
-│       └── config-loader.test.ts      # Config loading and validation
+│       ├── arg-parser.test.ts            # CLI argument parsing tests
+│       └── config-loader.test.ts         # Config loading and validation
 └── integration/
-    └── (integration tests)
+    └── cli-integration.test.ts           # End-to-end CLI tests
 ```
 
 ## Important Notes
 
-1. **Configuration Required**: CLI requires `.claude/atlassian-config.local.md` with valid Confluence profiles
+1. **Configuration Required**: CLI requires `.claude/bitbucket-config.local.md` with valid Bitbucket profiles
 2. **ES2022 Modules**: Project uses `"type": "module"` - no CommonJS
-3. **API Authentication**: Uses Confluence API tokens with basic authentication
-4. **Multi-Profile**: Supports multiple Confluence instances (cloud, staging, etc.)
+3. **API Authentication**: Uses Bitbucket App Passwords with Basic authentication
+4. **Multi-Profile**: Supports multiple Bitbucket workspaces/accounts
 5. **Flexible Output**: JSON or TOON formats for different use cases
-6. **Client Pooling**: Reuses clients per profile for better performance
-7. **Storage Format**: Page content uses Confluence storage format (XHTML-based)
+6. **Auth Pooling**: Reuses credentials per profile for better performance
+7. **No External Client**: Direct REST API calls using native fetch, not a Bitbucket client library
 
 ## Commit Message Convention
 
@@ -355,12 +374,12 @@ tests/
 **Examples:**
 
 ```
-feat: add list-spaces command for Confluence spaces
+feat: add list-repositories command for Bitbucket workspaces
 fix: handle connection timeout errors gracefully
 docs: update configuration examples in README
 refactor: extract API formatting into separate module
-test: add integration tests for Confluence operations
-chore: update confluence.js to latest version
+test: add integration tests for Bitbucket operations
+chore: update dependencies to latest versions
 ```
 
 When creating pull requests, the PR title must follow this format.

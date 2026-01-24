@@ -33,13 +33,12 @@ npm install -g bbk-cli
 
 ## Configuration
 
-### Step 1: Create API Token or App Password
+### Step 1: Create API Token
 
-1. Go to [Bitbucket Account Settings](https://bitbucket.org/account/settings/)
-2. Click "App passwords" in the left sidebar
-3. Click "Create app password"
-4. Give it a label and select permissions (repositories:read, pull requests:write, etc.)
-5. Copy the generated app password
+1. Go to [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+2. Click "Create API token"
+3. Give it a label (e.g., "BBK CLI")
+4. Copy the generated token
 
 ### Step 2: Create Configuration File
 
@@ -49,8 +48,8 @@ Create a configuration file at `.claude/bitbucket-config.local.md` in your proje
 ---
 profiles:
   cloud:
-    username: your-username
-    password: YOUR_APP_PASSWORD_HERE
+    email: your-email@example.com
+    apiToken: YOUR_API_TOKEN_HERE
 
 defaultProfile: cloud
 defaultFormat: json
@@ -64,9 +63,8 @@ This file stores your Bitbucket API connection profiles.
 ### Configuration Options
 
 - **profiles**: Named Bitbucket connection profiles
-  - `username`: Your Bitbucket username (for username/password auth)
-  - `password`: Your Bitbucket app password (for username/password auth)
-  - `token`: Your API token (alternative to username/password)
+  - `email`: Your Bitbucket email
+  - `apiToken`: Your Bitbucket API token
 
 - **defaultProfile**: Profile name to use when none specified
 - **defaultFormat**: Default output format (`json` or `toon`)
@@ -77,11 +75,12 @@ This file stores your Bitbucket API connection profiles.
 ---
 profiles:
   personal:
-    username: myusername
-    password: app_password_here
+    email: john@email.com
+    apiToken: <api_token>
 
   work:
-    token: work_token_here
+    email: john@company.com
+    apiToken: <api_token>
 
 defaultProfile: personal
 defaultFormat: json
@@ -98,12 +97,12 @@ Start the CLI and interact with Bitbucket through a REPL:
 npx bbk-cli
 ```
 
-Once started, you'll see the `bb>` prompt:
+Once started, you'll see the `bbk>` prompt:
 
 ```
-bb> list-repositories {"workspace":"myworkspace"}
-bb> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
-bb> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
+bbk> list-repositories {"workspace":"myworkspace"}
+bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
 ```
 
 ### Headless Mode
@@ -143,13 +142,13 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 - **list-repositories** - List all repositories in a workspace
 
   ```bash
-  bb> list-repositories {"workspace":"myworkspace"}
-  bb> list-repositories {"workspace":"myworkspace","format":"json"}
+  bbk> list-repositories {"workspace":"myworkspace"}
+  bbk> list-repositories {"workspace":"myworkspace","format":"json"}
   ```
 
 - **get-repository** - Get details of a specific repository
   ```bash
-  bb> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
   ```
 
 ### Pull Request Commands
@@ -157,21 +156,21 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 - **list-pullrequests** - List pull requests in a repository
 
   ```bash
-  bb> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
-  bb> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
+  bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
   ```
 
 - **get-pullrequest** - Get details of a specific pull request
 
   ```bash
-  bb> get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
+  bbk> get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
   ```
 
 - **create-pullrequest** - Create a new pull request
 
   ```bash
-  bb> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
-  bb> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","description":"PR description"}
+  bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
+  bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","description":"PR description"}
   ```
 
 ### Branch Commands
@@ -179,7 +178,7 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 - **list-branches** - List branches in a repository
 
   ```bash
-  bb> list-branches {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo"}
   ```
 
 ### Commit Commands
@@ -187,8 +186,8 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 - **list-commits** - List commits in a repository
 
   ```bash
-  bb> list-commits {"workspace":"myworkspace","repoSlug":"my-repo"}
-  bb> list-commits {"workspace":"myworkspace","repoSlug":"my-repo","branch":"main"}
+  bbk> list-commits {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-commits {"workspace":"myworkspace","repoSlug":"my-repo","branch":"main"}
   ```
 
 ### Issue Commands
@@ -196,20 +195,20 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 - **list-issues** - List issues in a repository
 
   ```bash
-  bb> list-issues {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-issues {"workspace":"myworkspace","repoSlug":"my-repo"}
   ```
 
 - **get-issue** - Get details of a specific issue
 
   ```bash
-  bb> get-issue {"workspace":"myworkspace","repoSlug":"my-repo","issueId":123}
+  bbk> get-issue {"workspace":"myworkspace","repoSlug":"my-repo","issueId":123}
   ```
 
 - **create-issue** - Create a new issue
 
   ```bash
-  bb> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found"}
-  bb> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","content":"Description here","kind":"bug","priority":"major"}
+  bbk> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found"}
+  bbk> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","content":"Description here","kind":"bug","priority":"major"}
   ```
 
 ### Pipeline Commands
@@ -217,22 +216,22 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 - **list-pipelines** - List pipelines in a repository
 
   ```bash
-  bb> list-pipelines {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-pipelines {"workspace":"myworkspace","repoSlug":"my-repo"}
   ```
 
 ### User Commands
 
 - **get-user** - Get user information
   ```bash
-  bb> get-user
-  bb> get-user {"username":"myusername"}
+  bbk> get-user
+  bbk> get-user {"username":"myusername"}
   ```
 
 ### Utility Commands
 
 - **test-connection** - Test Bitbucket API connection
   ```bash
-  bb> test-connection
+  bbk> test-connection
   ```
 
 ## Interactive Mode Commands
@@ -254,8 +253,8 @@ Special commands available in the REPL:
 Machine-readable JSON format (default):
 
 ```bash
-bb> format json
-bb> list-repositories {"workspace":"myworkspace"}
+bbk> format json
+bbk> list-repositories {"workspace":"myworkspace"}
 ```
 
 ### TOON Format
@@ -263,8 +262,8 @@ bb> list-repositories {"workspace":"myworkspace"}
 [Token-Oriented Object Notation](https://github.com/toon-format/toon) for AI-optimized output:
 
 ```bash
-bb> format toon
-bb> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> format toon
+bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
 ```
 
 ## Security
@@ -273,9 +272,9 @@ bb> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
 
 1. **Never commit** `.claude/bitbucket-config.local.md` to version control
 2. Add `*.local.md` to your `.gitignore`
-3. Keep your API tokens/app passwords secure and rotate them periodically
+3. Keep your API tokens secure and rotate them periodically
 4. Use different credentials for different environments
-5. App passwords have the same permissions as your user account
+5. API tokens have the same permissions as your user account
 
 ## Development
 
@@ -321,59 +320,31 @@ npm run pre-commit          # Run format + find-deadcode
 npx bbk-cli
 
 # List all repositories in workspace
-bb> list-repositories {"workspace":"myworkspace"}
+bbk> list-repositories {"workspace":"myworkspace"}
 
 # Get specific repository
-bb> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
 
 # List pull requests
-bb> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
+bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
 
 # Get specific pull request
-bb> get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
+bbk> get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
 
 # Create new pull request
-bb> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
+bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
 
 # List branches
-bb> list-branches {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo"}
 
 # List commits
-bb> list-commits {"workspace":"myworkspace","repoSlug":"my-repo","branch":"main"}
+bbk> list-commits {"workspace":"myworkspace","repoSlug":"my-repo","branch":"main"}
 
 # List issues
-bb> list-issues {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> list-issues {"workspace":"myworkspace","repoSlug":"my-repo"}
 
 # Create issue
-bb> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","kind":"bug"}
-```
-
-### Automation Scripts
-
-```bash
-#!/bin/bash
-# Get all repositories in workspace
-npx bbk-cli list-repositories '{"workspace":"myworkspace"}' > repos.json
-
-# Test connection
-npx bbk-cli test-connection
-
-# Create pull request from script
-npx bbk-cli create-pullrequest '{
-  "workspace": "myworkspace",
-  "repoSlug": "my-repo",
-  "title": "Automated PR",
-  "sourceBranch": "feature/automated",
-  "destinationBranch": "main",
-  "description": "Created via automation script"
-}'
-
-# List all open pull requests
-npx bbk-cli list-pullrequests '{
-  "workspace": "myworkspace",
-  "repoSlug": "my-repo",
-  "state": "OPEN"
-}' > open-prs.json
+bbk> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","kind":"bug"}
 ```
 
 ## Troubleshooting
@@ -385,21 +356,18 @@ npx bbk-cli list-pullrequests '{
 npx bbk-cli test-connection
 
 # Common issues:
-# 1. Invalid app password/token - regenerate credentials
-# 2. Wrong username - use Bitbucket username
-# 3. Incorrect authentication method - use either token OR username+password
+# 1. Invalid API token - regenerate credentials
+# 2. Wrong email - use your Bitbucket account email
 ```
 
 ### Authentication Errors
 
-- Verify your app password or token is correct
-- Check that the username matches your Bitbucket account
-- Ensure you're using the right authentication method (token OR username+password)
-- App passwords require proper permissions for the operations you want to perform
+- Verify your API token is correct
+- Check that the email matches your Bitbucket account
 
 ### Permission Errors
 
-- App passwords inherit your user permissions
+- API token inherit your user permissions
 - Check that your Bitbucket account has access to the workspace/repository
 - Some operations require specific repository permissions
 - Pull request creation requires write access to the repository

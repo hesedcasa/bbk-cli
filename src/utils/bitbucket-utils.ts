@@ -19,8 +19,104 @@ export interface ApiResult {
  * Bitbucket API client options
  */
 interface BitbucketClientAuth {
-  username: string;
-  password: string; // App password or token
+  email: string;
+  apiToken: string; // Bitbucket API token
+}
+
+/**
+ * Bitbucket API response types
+ */
+interface BitbucketPaginatedResponse<T> {
+  values?: T[];
+}
+
+interface BitbucketRepository {
+  slug: string;
+  name: string;
+  full_name: string;
+  description: string;
+  is_private: boolean;
+  created_on: string;
+  updated_on: string;
+}
+
+interface BitbucketPullRequest {
+  id: number;
+  title: string;
+  state: string;
+  author: {
+    display_name?: string;
+    nickname?: string;
+  };
+  source?: {
+    branch?: {
+      name: string;
+    };
+  };
+  destination?: {
+    branch?: {
+      name: string;
+    };
+  };
+  created_on: string;
+  updated_on: string;
+}
+
+interface BitbucketBranch {
+  name: string;
+  target?: {
+    hash?: string;
+    date?: string;
+    message?: string;
+  };
+}
+
+interface BitbucketCommit {
+  hash: string;
+  date: string;
+  message: string;
+  author?: {
+    user?: {
+      display_name?: string;
+    };
+    raw?: string;
+  };
+}
+
+interface BitbucketIssue {
+  id: number;
+  title: string;
+  state: string;
+  kind: string;
+  priority: string;
+  created_on: string;
+  updated_on: string;
+}
+
+interface BitbucketPipeline {
+  uuid: string;
+  build_number: number;
+  state?: {
+    name?: string;
+  };
+  created_on: string;
+  completed_on: string;
+  target?: {
+    ref_name?: string;
+  };
+}
+
+interface BitbucketUser {
+  uuid: string;
+  display_name?: string;
+  username?: string;
+}
+
+interface BitbucketReviewer {
+  user?: {
+    uuid?: string;
+  };
+  uuid?: string;
 }
 
 /**
@@ -46,13 +142,13 @@ export class BitbucketUtil {
 
     const options = getBitbucketClientOptions(this.config, profileName);
 
-    if (!options.auth?.username || !options.auth?.password) {
+    if (!options.auth?.email || !options.auth?.apiToken) {
       throw new Error(`Invalid authentication for profile "${profileName}"`);
     }
 
     const auth: BitbucketClientAuth = {
-      username: options.auth.username,
-      password: options.auth.password,
+      email: options.auth.email,
+      apiToken: options.auth.apiToken,
     };
 
     this.authPool.set(profileName, auth);
@@ -72,7 +168,7 @@ export class BitbucketUtil {
     const url = `${BITBUCKET_API_BASE}${endpoint}`;
 
     // Create Basic Auth header
-    const authString = Buffer.from(`${auth.username}:${auth.password}`).toString('base64');
+    const authString = Buffer.from(`${auth.email}:${auth.apiToken}`).toString('base64');
 
     const headers: Record<string, string> = {
       Authorization: `Basic ${authString}`,
@@ -132,11 +228,14 @@ export class BitbucketUtil {
    */
   async listRepositories(profileName: string, workspace: string, format: 'json' | 'toon' = 'json'): Promise<ApiResult> {
     try {
-      const response = await this.makeRequest(profileName, `/repositories/${workspace}`);
+      const response = (await this.makeRequest(
+        profileName,
+        `/repositories/${workspace}`
+      )) as BitbucketPaginatedResponse<BitbucketRepository>;
 
       // Simplify repository data for display
       const repos = response.values || [];
-      const simplifiedRepos = repos.map((r: unknown) => ({
+      const simplifiedRepos = repos.map(r => ({
         slug: r.slug,
         name: r.name,
         full_name: r.full_name,
@@ -203,11 +302,14 @@ export class BitbucketUtil {
         endpoint += `?state=${state}`;
       }
 
-      const response = await this.makeRequest(profileName, endpoint);
+      const response = (await this.makeRequest(
+        profileName,
+        endpoint
+      )) as BitbucketPaginatedResponse<BitbucketPullRequest>;
       const prs = response.values || [];
 
       // Simplify PR data for display
-      const simplifiedPRs = prs.map((pr: unknown) => ({
+      const simplifiedPRs = prs.map(pr => ({
         id: pr.id,
         title: pr.title,
         state: pr.state,
@@ -265,18 +367,21 @@ export class BitbucketUtil {
   /**
    * Get default reviewers for a repository
    */
-  async getDefaultReviewers(profileName: string, workspace: string, repoSlug: string): Promise<unknown[]> {
+  async getDefaultReviewers(
+    profileName: string,
+    workspace: string,
+    repoSlug: string
+  ): Promise<Array<{ uuid: string }>> {
     try {
-      const response = await this.makeRequest(
+      const response = (await this.makeRequest(
         profileName,
         `/repositories/${workspace}/${repoSlug}/effective-default-reviewers`
-      );
+      )) as BitbucketPaginatedResponse<BitbucketReviewer>;
 
       // Extract user UUIDs from the response
       const reviewers = response.values || [];
-      return reviewers.map((reviewer: unknown) => ({
-        uuid:
-          (reviewer as { user?: { uuid?: string }; uuid?: string }).user?.uuid || (reviewer as { uuid?: string }).uuid,
+      return reviewers.map(reviewer => ({
+        uuid: reviewer.user?.uuid || reviewer.uuid || '',
       }));
     } catch {
       // Return empty array if fetching reviewers fails
@@ -304,7 +409,7 @@ export class BitbucketUtil {
         this.getDefaultReviewers(profileName, workspace, repoSlug),
       ]);
 
-      const currentUserUuid = currentUserResponse.uuid;
+      const currentUserUuid = (currentUserResponse as BitbucketUser).uuid;
 
       // Filter out the current user from reviewers (author cannot be a reviewer)
       const filteredReviewers = defaultReviewers.filter(reviewer => reviewer.uuid !== currentUserUuid);
@@ -377,10 +482,10 @@ export class BitbucketUtil {
         endpoint += `?${params.join('&')}`;
       }
 
-      const response = await this.makeRequest(profileName, endpoint);
+      const response = (await this.makeRequest(profileName, endpoint)) as BitbucketPaginatedResponse<BitbucketBranch>;
 
       const branches = response.values || [];
-      const simplifiedBranches = branches.map((b: unknown) => ({
+      const simplifiedBranches = branches.map(b => ({
         name: b.name,
         target: {
           hash: b.target?.hash,
@@ -420,10 +525,10 @@ export class BitbucketUtil {
         endpoint += `/${branch}`;
       }
 
-      const response = await this.makeRequest(profileName, endpoint);
+      const response = (await this.makeRequest(profileName, endpoint)) as BitbucketPaginatedResponse<BitbucketCommit>;
       const commits = response.values || [];
 
-      const simplifiedCommits = commits.map((c: unknown) => ({
+      const simplifiedCommits = commits.map(c => ({
         hash: c.hash,
         date: c.date,
         message: c.message,
@@ -454,10 +559,13 @@ export class BitbucketUtil {
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      const response = await this.makeRequest(profileName, `/repositories/${workspace}/${repoSlug}/issues`);
+      const response = (await this.makeRequest(
+        profileName,
+        `/repositories/${workspace}/${repoSlug}/issues`
+      )) as BitbucketPaginatedResponse<BitbucketIssue>;
 
       const issues = response.values || [];
-      const simplifiedIssues = issues.map((i: unknown) => ({
+      const simplifiedIssues = issues.map(i => ({
         id: i.id,
         title: i.title,
         state: i.state,
@@ -565,10 +673,13 @@ export class BitbucketUtil {
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      const response = await this.makeRequest(profileName, `/repositories/${workspace}/${repoSlug}/pipelines/`);
+      const response = (await this.makeRequest(
+        profileName,
+        `/repositories/${workspace}/${repoSlug}/pipelines/`
+      )) as BitbucketPaginatedResponse<BitbucketPipeline>;
 
       const pipelines = response.values || [];
-      const simplifiedPipelines = pipelines.map((p: unknown) => ({
+      const simplifiedPipelines = pipelines.map(p => ({
         uuid: p.uuid,
         build_number: p.build_number,
         state: p.state?.name,
@@ -627,7 +738,7 @@ export class BitbucketUtil {
   async testConnection(profileName: string): Promise<ApiResult> {
     try {
       // Test connection by getting current user
-      const response = await this.makeRequest(profileName, '/user');
+      const response = (await this.makeRequest(profileName, '/user')) as BitbucketUser;
 
       return {
         success: true,

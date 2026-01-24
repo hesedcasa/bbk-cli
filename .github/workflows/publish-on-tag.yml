@@ -3,7 +3,7 @@ name: publish-on-tag
 on:
   push:
     tags:
-      - 'conni-cli-v*'
+      - 'bbk-cli-v*'
   workflow_dispatch:
     inputs:
       npm-publish:

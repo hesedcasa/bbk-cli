@@ -94,7 +94,7 @@ describe('cli/wrapper', () => {
         expect(readline.default.createInterface).toHaveBeenCalledWith({
           input: process.stdin,
           output: process.stdout,
-          prompt: 'bb> ',
+          prompt: 'bbk> ',
         });
         expect(newCli).toBeDefined();
       });
@@ -104,7 +104,7 @@ describe('cli/wrapper', () => {
       it('should load config successfully', async () => {
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });
@@ -122,7 +122,7 @@ describe('cli/wrapper', () => {
       it('should set default profile and format', async () => {
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'toon',
         });
@@ -169,7 +169,7 @@ describe('cli/wrapper', () => {
         process.env.CLAUDE_PROJECT_ROOT = '/custom/root';
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });
@@ -187,7 +187,7 @@ describe('cli/wrapper', () => {
         delete process.env.CLAUDE_PROJECT_ROOT;
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });
@@ -393,7 +393,7 @@ describe('cli/wrapper', () => {
       beforeEach(async () => {
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });
@@ -518,7 +518,7 @@ describe('cli/wrapper', () => {
 
         await cli['runCommand']('list-branches', '{"workspace":"myworkspace","repoSlug":"my-repo"}');
 
-        expect(listBranches).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', 'json');
+        expect(listBranches).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', undefined, undefined, 'json');
 
         consoleLogSpy.mockRestore();
       });
@@ -648,7 +648,7 @@ describe('cli/wrapper', () => {
       beforeEach(async () => {
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });
@@ -674,7 +674,7 @@ describe('cli/wrapper', () => {
       beforeEach(async () => {
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });
@@ -704,7 +704,7 @@ describe('cli/wrapper', () => {
       beforeEach(async () => {
         const { loadConfig } = await import('../../../src/utils/index.js');
         vi.mocked(loadConfig).mockReturnValue({
-          profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
+          profiles: { cloud: { email: 'test@test.com', apiToken: 'token123' } },
           defaultProfile: 'cloud',
           defaultFormat: 'json',
         });

@@ -12,14 +12,14 @@ vi.mock('../../../src/commands/index.js', () => ({
 
 vi.mock('../../../src/config/index.js', () => ({
   COMMANDS: [
-    'list-spaces',
-    'get-space',
-    'list-pages',
-    'get-page',
-    'create-page',
-    'update-page',
+    'list-repos',
+    'get-repo',
+    'list-prs',
+    'get-pr',
+    'create-pr',
+    'update-pr',
     'add-comment',
-    'delete-page',
+    'delete-pr',
     'get-user',
     'test-connection',
   ],
@@ -98,12 +98,12 @@ describe('arg-parser', () => {
       const { printCommandDetail } = await import('../../../src/commands/index.js');
 
       try {
-        await parseArguments(['list-spaces', '-h']);
+        await parseArguments(['list-repos', '-h']);
       } catch {
         // Expected
       }
 
-      expect(printCommandDetail).toHaveBeenCalledWith('list-spaces');
+      expect(printCommandDetail).toHaveBeenCalledWith('list-repos');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
       exitSpy.mockRestore();
@@ -121,7 +121,7 @@ describe('arg-parser', () => {
         // Expected
       }
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Confluence CLI'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Bitbucket CLI'));
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Usage:'));
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -141,7 +141,7 @@ describe('arg-parser', () => {
         // Expected
       }
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Confluence CLI'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Bitbucket CLI'));
       expect(exitSpy).toHaveBeenCalledWith(0);
 
       exitSpy.mockRestore();
@@ -155,12 +155,12 @@ describe('arg-parser', () => {
       const { runCommand } = await import('../../../src/commands/index.js');
 
       try {
-        await parseArguments(['list-spaces', '{"profile":"cloud"}']);
+        await parseArguments(['list-repos', '{"workspace":"myworkspace"}']);
       } catch {
         // Expected
       }
 
-      expect(runCommand).toHaveBeenCalledWith('list-spaces', '{"profile":"cloud"}', null);
+      expect(runCommand).toHaveBeenCalledWith('list-repos', '{"workspace":"myworkspace"}', null);
       expect(exitSpy).toHaveBeenCalledWith(0);
 
       exitSpy.mockRestore();
@@ -191,12 +191,12 @@ describe('arg-parser', () => {
       const { runCommand } = await import('../../../src/commands/index.js');
 
       try {
-        await parseArguments(['get-page', '{"pageId":"123"}', '--format', 'json']);
+        await parseArguments(['get-repo', '{"workspace":"myworkspace","repo":"myrepo"}', '--format', 'json']);
       } catch {
         // Expected
       }
 
-      expect(runCommand).toHaveBeenCalledWith('get-page', '{"pageId":"123"}', '--format');
+      expect(runCommand).toHaveBeenCalledWith('get-repo', '{"workspace":"myworkspace","repo":"myrepo"}', '--format');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
       exitSpy.mockRestore();
@@ -240,7 +240,7 @@ describe('arg-parser', () => {
       const { runCommand } = await import('../../../src/commands/index.js');
 
       try {
-        await parseArguments(['--version', 'list-spaces', '{"profile":"cloud"}']);
+        await parseArguments(['--version', 'list-repos', '{"workspace":"myworkspace"}']);
       } catch {
         // Expected
       }
@@ -261,7 +261,7 @@ describe('arg-parser', () => {
       const { runCommand } = await import('../../../src/commands/index.js');
 
       try {
-        await parseArguments(['--commands', 'list-spaces']);
+        await parseArguments(['--commands', 'list-repos']);
       } catch {
         // Expected
       }
@@ -279,14 +279,14 @@ describe('arg-parser', () => {
       const { runCommand } = await import('../../../src/commands/index.js');
 
       const commands = [
-        'list-spaces',
-        'get-space',
-        'list-pages',
-        'get-page',
-        'create-page',
-        'update-page',
+        'list-repos',
+        'get-repo',
+        'list-prs',
+        'get-pr',
+        'create-pr',
+        'update-pr',
         'add-comment',
-        'delete-page',
+        'delete-pr',
         'get-user',
         'test-connection',
       ];
@@ -318,10 +318,10 @@ describe('arg-parser', () => {
         // Expected
       }
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Confluence CLI'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx conni-cli'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx conni-cli --commands'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-spaces'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Bitbucket CLI'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli --commands'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repos'));
 
       exitSpy.mockRestore();
       consoleLogSpy.mockRestore();
@@ -340,8 +340,8 @@ describe('arg-parser', () => {
       }
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Examples:'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx conni-cli list-spaces'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx conni-cli get-page'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli list-repos'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli get-repo'));
 
       exitSpy.mockRestore();
       consoleLogSpy.mockRestore();

@@ -5,38 +5,38 @@ import { getCurrentVersion, printAvailableCommands, printCommandDetail } from '.
 // Mock the config module
 vi.mock('../../../src/config/index.js', () => ({
   COMMANDS: [
-    'list-spaces',
-    'get-space',
-    'list-pages',
-    'get-page',
-    'create-page',
-    'update-page',
+    'list-repos',
+    'get-repo',
+    'list-prs',
+    'get-pr',
+    'create-pr',
+    'update-pr',
     'add-comment',
-    'delete-page',
+    'delete-pr',
     'get-user',
     'test-connection',
   ],
   COMMANDS_INFO: [
-    'List all accessible spaces',
-    'Get details of a specific space',
-    'List pages in a space or by search criteria',
-    'Get details of a specific page',
-    'Create a new page',
-    'Update an existing page',
-    'Add a comment to a page',
-    'Delete a page',
+    'List all accessible repositories',
+    'Get details of a specific repository',
+    'List pull requests in a repository',
+    'Get details of a specific pull request',
+    'Create a new pull request',
+    'Update an existing pull request',
+    'Add a comment to a pull request',
+    'Delete a pull request',
     'Get user information',
-    'Test Confluence API connection',
+    'Test Bitbucket API connection',
   ],
   COMMANDS_DETAIL: [
-    '\nParameters:\n- profile (optional): string\n- format (optional): string\n\nExample:\nlist-spaces',
-    '\nParameters:\n- spaceKey (required): string\n\nExample:\nget-space',
-    '\nParameters:\n- spaceKey (optional): string\n- title (optional): string\n- limit (optional): number\n\nExample:\nlist-pages',
-    '\nParameters:\n- pageId (required): string\n\nExample:\nget-page',
-    '\nParameters:\n- spaceKey (required): string\n- title (required): string\n- body (required): string\n\nExample:\ncreate-page',
-    '\nParameters:\n- pageId (required): string\n- title (required): string\n- body (required): string\n- version (required): number\n\nExample:\nupdate-page',
-    '\nParameters:\n- pageId (required): string\n- body (required): string\n\nExample:\nadd-comment',
-    '\nParameters:\n- pageId (required): string\n\nExample:\ndelete-page',
+    '\nParameters:\n- workspace (optional): string\n- format (optional): string\n\nExample:\nlist-repos',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n\nExample:\nget-repo',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- state (optional): string\n- limit (optional): number\n\nExample:\nlist-prs',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n\nExample:\nget-pr',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- title (required): string\n- sourceBranch (required): string\n- destinationBranch (required): string\n\nExample:\ncreate-pr',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n- title (optional): string\n- description (optional): string\n\nExample:\nupdate-pr',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n- content (required): string\n\nExample:\nadd-comment',
+    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n\nExample:\ndelete-pr',
     '\nParameters:\n- accountId (optional): string\n- username (optional): string\n\nExample:\nget-user',
     '\nParameters:\n- profile (optional): string\n\nExample:\ntest-connection',
   ],
@@ -54,16 +54,16 @@ describe('commands/helpers', () => {
       printAvailableCommands();
 
       expect(consoleLogSpy).toHaveBeenCalledWith('\nAvailable commands:');
-      expect(consoleLogSpy).toHaveBeenCalledWith('1. list-spaces: List all accessible spaces');
-      expect(consoleLogSpy).toHaveBeenCalledWith('2. get-space: Get details of a specific space');
-      expect(consoleLogSpy).toHaveBeenCalledWith('3. list-pages: List pages in a space or by search criteria');
-      expect(consoleLogSpy).toHaveBeenCalledWith('4. get-page: Get details of a specific page');
-      expect(consoleLogSpy).toHaveBeenCalledWith('5. create-page: Create a new page');
-      expect(consoleLogSpy).toHaveBeenCalledWith('6. update-page: Update an existing page');
-      expect(consoleLogSpy).toHaveBeenCalledWith('7. add-comment: Add a comment to a page');
-      expect(consoleLogSpy).toHaveBeenCalledWith('8. delete-page: Delete a page');
+      expect(consoleLogSpy).toHaveBeenCalledWith('1. list-repos: List all accessible repositories');
+      expect(consoleLogSpy).toHaveBeenCalledWith('2. get-repo: Get details of a specific repository');
+      expect(consoleLogSpy).toHaveBeenCalledWith('3. list-prs: List pull requests in a repository');
+      expect(consoleLogSpy).toHaveBeenCalledWith('4. get-pr: Get details of a specific pull request');
+      expect(consoleLogSpy).toHaveBeenCalledWith('5. create-pr: Create a new pull request');
+      expect(consoleLogSpy).toHaveBeenCalledWith('6. update-pr: Update an existing pull request');
+      expect(consoleLogSpy).toHaveBeenCalledWith('7. add-comment: Add a comment to a pull request');
+      expect(consoleLogSpy).toHaveBeenCalledWith('8. delete-pr: Delete a pull request');
       expect(consoleLogSpy).toHaveBeenCalledWith('9. get-user: Get user information');
-      expect(consoleLogSpy).toHaveBeenCalledWith('10. test-connection: Test Confluence API connection');
+      expect(consoleLogSpy).toHaveBeenCalledWith('10. test-connection: Test Bitbucket API connection');
 
       consoleLogSpy.mockRestore();
     });
@@ -77,8 +77,8 @@ describe('commands/helpers', () => {
       // Find the calls that contain command numbers
       const numberCalls = calls.filter(call => call[0] && call[0].match(/^\d+\./));
       expect(numberCalls).toHaveLength(10);
-      expect(numberCalls[0][0]).toBe('1. list-spaces: List all accessible spaces');
-      expect(numberCalls[9][0]).toBe('10. test-connection: Test Confluence API connection');
+      expect(numberCalls[0][0]).toBe('1. list-repos: List all accessible repositories');
+      expect(numberCalls[9][0]).toBe('10. test-connection: Test Bitbucket API connection');
 
       consoleLogSpy.mockRestore();
     });
@@ -88,52 +88,52 @@ describe('commands/helpers', () => {
     it('should print detailed information for a valid command', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('list-spaces');
+      printCommandDetail('list-repos');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-spaces'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('List all accessible spaces'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repos'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('List all accessible repositories'));
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Parameters:'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('profile (optional)'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (optional)'));
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Example:'));
 
       consoleLogSpy.mockRestore();
     });
 
-    it('should print details for get-space command', () => {
+    it('should print details for get-repo command', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('get-space');
+      printCommandDetail('get-repo');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('get-space'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Get details of a specific space'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('spaceKey (required)'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('get-repo'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Get details of a specific repository'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (required)'));
 
       consoleLogSpy.mockRestore();
     });
 
-    it('should print details for create-page command', () => {
+    it('should print details for create-pr command', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('create-page');
+      printCommandDetail('create-pr');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('create-page'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Create a new page'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('spaceKey (required)'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('create-pr'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Create a new pull request'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (required)'));
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('title (required)'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('body (required)'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('sourceBranch (required)'));
 
       consoleLogSpy.mockRestore();
     });
 
-    it('should print details for update-page command', () => {
+    it('should print details for update-pr command', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('update-page');
+      printCommandDetail('update-pr');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('update-page'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Update an existing page'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('pageId (required)'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('version (required)'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('update-pr'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Update an existing pull request'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (required)'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('prId (required)'));
 
       consoleLogSpy.mockRestore();
     });
@@ -142,14 +142,14 @@ describe('commands/helpers', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       const commands = [
-        'list-spaces',
-        'get-space',
-        'list-pages',
-        'get-page',
-        'create-page',
-        'update-page',
+        'list-repos',
+        'get-repo',
+        'list-prs',
+        'get-pr',
+        'create-pr',
+        'update-pr',
         'add-comment',
-        'delete-page',
+        'delete-pr',
         'get-user',
         'test-connection',
       ];
@@ -234,9 +234,9 @@ describe('commands/helpers', () => {
     it('should trim whitespace from command name', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('  list-spaces  ');
+      printCommandDetail('  list-repos  ');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-spaces'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repos'));
       expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('Unknown command'));
 
       consoleLogSpy.mockRestore();
@@ -245,9 +245,9 @@ describe('commands/helpers', () => {
     it('should handle commands with mixed case', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('LIST-SPACES');
+      printCommandDetail('LIST-REPOS');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('Unknown command: LIST-SPACES');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Unknown command: LIST-REPOS');
       expect(consoleLogSpy).toHaveBeenCalledWith('\nAvailable commands:');
 
       consoleLogSpy.mockRestore();

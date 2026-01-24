@@ -48,7 +48,7 @@ describe('CLI Integration', () => {
   let configPath: string;
 
   beforeEach(() => {
-    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'conni-cli-integration-'));
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-integration-'));
     fs.mkdirSync(path.join(testDir, '.claude'));
     configPath = path.join(testDir, '.claude', 'bitbucket-config.local.md');
 
@@ -56,15 +56,11 @@ describe('CLI Integration', () => {
     const configContent = `---
 profiles:
   cloud:
-    host: https://api.bitbucket.org/2.0
-    workspace: test-workspace
-    username: test@test.com
-    password: test_token_123
+    email: test@test.com
+    apiToken: test_token_123
   staging:
-    host: https://api.bitbucket.org/2.0
-    workspace: staging-workspace
-    username: staging@test.com
-    password: staging_token_456
+    email: staging@test.com
+    apiToken: staging_token_456
 
 defaultProfile: cloud
 defaultFormat: json
@@ -91,10 +87,8 @@ defaultFormat: json
       expect(config).toBeDefined();
       expect(config.profiles).toBeDefined();
       expect(config.profiles.cloud).toBeDefined();
-      expect(config.profiles.cloud.host).toBe('https://api.bitbucket.org/2.0');
-      expect(config.profiles.cloud.workspace).toBe('test-workspace');
-      expect(config.profiles.cloud.username).toBe('test@test.com');
-      expect(config.profiles.cloud.password).toBe('test_token_123');
+      expect(config.profiles.cloud.email).toBe('test@test.com');
+      expect(config.profiles.cloud.apiToken).toBe('test_token_123');
       expect(config.defaultProfile).toBe('cloud');
       expect(config.defaultFormat).toBe('json');
     });
@@ -112,17 +106,15 @@ defaultFormat: json
       const invalidConfig = `---
 profiles:
   incomplete:
-    host: https://api.bitbucket.org/2.0
-    workspace: test-workspace
-    username: test@test.com
-    # Missing password or token
+    email: test@test.com
+    # Missing apiToken
 ---
 `;
       fs.writeFileSync(configPath, invalidConfig);
 
       const { loadConfig } = await import('../../src/utils/config-loader.js');
 
-      expect(() => loadConfig(testDir)).toThrow('must have either "token" or both "username" and "password"');
+      expect(() => loadConfig(testDir)).toThrow('must have both "email" and "apiToken"');
     });
   });
 
@@ -231,8 +223,8 @@ profiles:
       const options = getBitbucketClientOptions(config, 'cloud');
 
       expect(options.auth).toBeDefined();
-      expect(options.auth?.username).toBe('test@test.com');
-      expect(options.auth?.password).toBe('test_token_123');
+      expect(options.auth?.email).toBe('test@test.com');
+      expect(options.auth?.apiToken).toBe('test_token_123');
     });
 
     it('should handle different profiles', async () => {
@@ -243,8 +235,8 @@ profiles:
       const cloudOptions = getBitbucketClientOptions(config, 'cloud');
       const stagingOptions = getBitbucketClientOptions(config, 'staging');
 
-      expect(cloudOptions.auth?.username).toBe('test@test.com');
-      expect(stagingOptions.auth?.username).toBe('staging@test.com');
+      expect(cloudOptions.auth?.email).toBe('test@test.com');
+      expect(stagingOptions.auth?.email).toBe('staging@test.com');
       expect(cloudOptions).not.toEqual(stagingOptions);
     });
   });
@@ -367,40 +359,19 @@ This is just markdown without frontmatter
       expect(() => getBitbucketClientOptions(config, 'nonexistent')).toThrow('Profile "nonexistent" not found');
     });
 
-    // Note: Host URL validation may not be implemented in current version
-    it.skip('should handle invalid host URL', async () => {
+    it('should handle invalid email format', async () => {
       const invalidConfig = `---
 profiles:
   invalid:
-    host: invalid-url
-    workspace: test-workspace
-    username: test@test.com
-    password: token
+    email: invalid-email
+    apiToken: token
 ---
 `;
       fs.writeFileSync(configPath, invalidConfig);
 
       const { loadConfig } = await import('../../src/utils/config-loader.js');
 
-      expect(() => loadConfig(testDir)).toThrow('host must start with http:// or https://');
-    });
-
-    // Note: Username/email validation may not be implemented in current version
-    it.skip('should handle invalid email format', async () => {
-      const invalidConfig = `---
-profiles:
-  invalid:
-    host: https://api.bitbucket.org/2.0
-    workspace: test-workspace
-    username: invalid-email
-    password: token
----
-`;
-      fs.writeFileSync(configPath, invalidConfig);
-
-      const { loadConfig } = await import('../../src/utils/config-loader.js');
-
-      expect(() => loadConfig(testDir)).toThrow('username appears to be invalid');
+      expect(() => loadConfig(testDir)).toThrow('Profile "invalid" has invalid email format: "invalid-email"');
     });
   });
 

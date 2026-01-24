@@ -328,7 +328,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-branches', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(listBranches).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', 'json');
+      expect(listBranches).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', undefined, undefined, 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"branches": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
