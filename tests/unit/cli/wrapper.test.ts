@@ -544,12 +544,12 @@ describe('cli/wrapper', () => {
 
       it('should execute get-user', async () => {
         const { getUser } = await import('../../../src/utils/index.js');
-        vi.mocked(getUser).mockResolvedValue({ success: true, result: '{"username":"testuser"}' });
+        vi.mocked(getUser).mockResolvedValue({ success: true, result: '{"userId":"5b10a2844c20165700ede21g"}' });
         const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-        await cli['runCommand']('get-user', '{"username":"testuser"}');
+        await cli['runCommand']('get-user', '{"userId":"5b10a2844c20165700ede21g"}');
 
-        expect(getUser).toHaveBeenCalledWith('cloud', 'testuser', 'json');
+        expect(getUser).toHaveBeenCalledWith('cloud', '5b10a2844c20165700ede21g', 'json');
 
         consoleLogSpy.mockRestore();
       });

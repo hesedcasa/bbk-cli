@@ -233,16 +233,20 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
 
 - **get-user** - Get user information
   ```bash
-  bbk> get-user
-  bbk> get-user {"username":"myusername"}
+  bbk> get-user # Get current authenticated user
+  bbk> get-user {"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15
   ```
+
+"} # Get specific user by UUID
+
+````
 
 ### Utility Commands
 
 - **test-connection** - Test Bitbucket API connection
-  ```bash
-  bbk> test-connection
-  ```
+```bash
+bbk> test-connection
+````
 
 ## Interactive Mode Commands
 

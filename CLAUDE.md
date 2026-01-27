@@ -167,7 +167,7 @@ defaultFormat: json
   9. `get-issue` - Get details of a specific issue
   10. `create-issue` - Create a new issue
   11. `list-pipelines` - List pipelines in a repository
-  12. `get-user` - Get user information
+  12. `get-user` - Get user information (uses UUID/account_id, not username)
   13. `test-connection` - Test Bitbucket API connection
 
 ### TypeScript Configuration
@@ -192,7 +192,7 @@ The CLI provides **13 Bitbucket commands**:
 9. **get-issue** - Get details of a specific issue
 10. **create-issue** - Create a new issue
 11. **list-pipelines** - List pipelines in a repository
-12. **get-user** - Get user information
+12. **get-user** - Get user information (uses UUID/account_id, not username)
 13. **test-connection** - Test Bitbucket API connection
 
 ### Command Examples
@@ -213,6 +213,10 @@ bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
 bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
 bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
 bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo","q":"name~\"feature\""}
+bbk> get-user {}                        # Get current authenticated user
+bbk> get-user {"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15
+
+"}  # Get specific user by UUID
 bbk> exit                              # Exit
 
 # Headless mode (one-off commands):

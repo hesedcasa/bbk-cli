@@ -483,12 +483,12 @@ profiles:
       });
 
       try {
-        await runCommand('get-user', '{"username":"johndoe"}', null);
+        await runCommand('get-user', '{"userId":"5b10a2844c20165700ede21g"}', null);
       } catch {
         // Expected
       }
 
-      expect(getUser).toHaveBeenCalledWith('cloud', 'johndoe', 'json');
+      expect(getUser).toHaveBeenCalledWith('cloud', '5b10a2844c20165700ede21g', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('John Doe'));
 
       exitSpy.mockRestore();

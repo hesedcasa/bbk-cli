@@ -250,16 +250,12 @@ export async function listPipelines(
 /**
  * Get user information
  * @param profile - Bitbucket profile name
- * @param username - Username (optional)
+ * @param userId - User UUID or account_id (optional, if not provided returns current authenticated user)
  * @param format - Output format (json, toon)
  */
-export async function getUser(
-  profile: string,
-  username?: string,
-  format: 'json' | 'toon' = 'json'
-): Promise<ApiResult> {
+export async function getUser(profile: string, userId?: string, format: 'json' | 'toon' = 'json'): Promise<ApiResult> {
   const bitbucket = await initBitbucket();
-  return await bitbucket.getUser(profile, username, format);
+  return await bitbucket.getUser(profile, userId, format);
 }
 
 /**
