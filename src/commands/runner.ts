@@ -41,42 +41,36 @@ export const runCommand = async (
 
     switch (command) {
       case 'list-repositories':
-        if (!args.workspace) {
-          console.error('ERROR: "workspace" parameter is required');
-          process.exit(1);
-        }
         result = await listRepositories(profile, args.workspace, format);
         break;
 
       case 'get-repository':
-        if (!args.workspace || !args.repoSlug) {
-          console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+        if (!args.repoSlug) {
+          console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
         result = await getRepository(profile, args.workspace, args.repoSlug, format);
         break;
 
       case 'list-pullrequests':
-        if (!args.workspace || !args.repoSlug) {
-          console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+        if (!args.repoSlug) {
+          console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
         result = await listPullRequests(profile, args.workspace, args.repoSlug, args.state, format);
         break;
 
       case 'get-pullrequest':
-        if (!args.workspace || !args.repoSlug || !args.pullRequestId) {
-          console.error('ERROR: "workspace", "repoSlug", and "pullRequestId" parameters are required');
+        if (!args.repoSlug || !args.pullRequestId) {
+          console.error('ERROR: "repoSlug" and "pullRequestId" parameters are required');
           process.exit(1);
         }
         result = await getPullRequest(profile, args.workspace, args.repoSlug, args.pullRequestId, format);
         break;
 
       case 'create-pullrequest':
-        if (!args.workspace || !args.repoSlug || !args.title || !args.sourceBranch || !args.destinationBranch) {
-          console.error(
-            'ERROR: "workspace", "repoSlug", "title", "sourceBranch", and "destinationBranch" parameters are required'
-          );
+        if (!args.repoSlug || !args.title || !args.sourceBranch || !args.destinationBranch) {
+          console.error('ERROR: "repoSlug", "title", "sourceBranch", and "destinationBranch" parameters are required');
           process.exit(1);
         }
         result = await createPullRequest(
@@ -92,40 +86,40 @@ export const runCommand = async (
         break;
 
       case 'list-branches':
-        if (!args.workspace || !args.repoSlug) {
-          console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+        if (!args.repoSlug) {
+          console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
         result = await listBranches(profile, args.workspace, args.repoSlug, args.q, args.sort, format);
         break;
 
       case 'list-commits':
-        if (!args.workspace || !args.repoSlug) {
-          console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+        if (!args.repoSlug) {
+          console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
         result = await listCommits(profile, args.workspace, args.repoSlug, args.branch, format);
         break;
 
       case 'list-issues':
-        if (!args.workspace || !args.repoSlug) {
-          console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+        if (!args.repoSlug) {
+          console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
         result = await listIssues(profile, args.workspace, args.repoSlug, format);
         break;
 
       case 'get-issue':
-        if (!args.workspace || !args.repoSlug || !args.issueId) {
-          console.error('ERROR: "workspace", "repoSlug", and "issueId" parameters are required');
+        if (!args.repoSlug || !args.issueId) {
+          console.error('ERROR: "repoSlug" and "issueId" parameters are required');
           process.exit(1);
         }
         result = await getIssue(profile, args.workspace, args.repoSlug, args.issueId, format);
         break;
 
       case 'create-issue':
-        if (!args.workspace || !args.repoSlug || !args.title) {
-          console.error('ERROR: "workspace", "repoSlug", and "title" parameters are required');
+        if (!args.repoSlug || !args.title) {
+          console.error('ERROR: "repoSlug" and "title" parameters are required');
           process.exit(1);
         }
         result = await createIssue(
@@ -141,8 +135,8 @@ export const runCommand = async (
         break;
 
       case 'list-pipelines':
-        if (!args.workspace || !args.repoSlug) {
-          console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+        if (!args.repoSlug) {
+          console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
         result = await listPipelines(profile, args.workspace, args.repoSlug, format);

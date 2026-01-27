@@ -124,7 +124,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-repository', '{}', null);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "workspace" and "repoSlug" parameters are required');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" parameter is required');
       expect(exitSpy).toHaveBeenCalledWith(1);
 
       exitSpy.mockRestore();
@@ -214,9 +214,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-pullrequest', '{}', null);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'ERROR: "workspace", "repoSlug", and "pullRequestId" parameters are required'
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" and "pullRequestId" parameters are required');
       expect(exitSpy).toHaveBeenCalledWith(1);
 
       exitSpy.mockRestore();
@@ -306,7 +304,7 @@ describe('commands/runner', () => {
       await runCommand('create-pullrequest', '{"workspace":"myworkspace"}', null);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'ERROR: "workspace", "repoSlug", "title", "sourceBranch", and "destinationBranch" parameters are required'
+        'ERROR: "repoSlug", "title", "sourceBranch", and "destinationBranch" parameters are required'
       );
       expect(exitSpy).toHaveBeenCalledWith(1);
 
@@ -415,9 +413,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-issue', '{}', null);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'ERROR: "workspace", "repoSlug", and "issueId" parameters are required'
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" and "issueId" parameters are required');
       expect(exitSpy).toHaveBeenCalledWith(1);
 
       exitSpy.mockRestore();
@@ -500,9 +496,7 @@ describe('commands/runner', () => {
 
       await runCommand('create-issue', '{"workspace":"myworkspace"}', null);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'ERROR: "workspace", "repoSlug", and "title" parameters are required'
-      );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" and "title" parameters are required');
       expect(exitSpy).toHaveBeenCalledWith(1);
 
       exitSpy.mockRestore();
