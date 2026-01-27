@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.1...bbk-cli-v1.1.2) (2026-01-27)
+
+
+### 🛠️ Fixes
+
+* fix get-user return error when pass in username ([#10](https://github.com/hesedcasa/bbk-cli/issues/10)) ([732359f](https://github.com/hesedcasa/bbk-cli/commit/732359fb65f3165bb2fd93febaca9594497a07e4))
+
 ## [1.1.1](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.0...bbk-cli-v1.1.1) (2026-01-27)
 
 
