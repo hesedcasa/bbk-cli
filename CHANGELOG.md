@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.0.0...bbk-cli-v1.1.0) (2026-01-27)
+
+
+### 🎉 Features
+
+* add default workspace support from config profile ([#7](https://github.com/hesedcasa/bbk-cli/issues/7)) ([e702a98](https://github.com/hesedcasa/bbk-cli/commit/e702a9835f1b172c502ae64b8393f3ab6b6dee6d))
+
 ## 1.0.0 (2026-01-24)
 
 
