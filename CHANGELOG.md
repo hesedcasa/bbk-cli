@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.0...bbk-cli-v1.1.1) (2026-01-27)
+
+
+### 📄 Documentation
+
+* update configuration examples in README ([0b1dc6d](https://github.com/hesedcasa/bbk-cli/commit/0b1dc6de6457556b381324560601de52ac77a881))
+
 ## [1.1.0](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.0.0...bbk-cli-v1.1.0) (2026-01-27)
 
 
