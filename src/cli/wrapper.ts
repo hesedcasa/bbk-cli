@@ -168,17 +168,12 @@ export class wrapper {
 
       switch (command) {
         case 'list-repositories':
-          if (!args.workspace) {
-            console.error('ERROR: "workspace" parameter is required');
-            this.rl.prompt();
-            return;
-          }
           result = await listRepositories(profile, args.workspace, format);
           break;
 
         case 'get-repository':
-          if (!args.workspace || !args.repoSlug) {
-            console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+          if (!args.repoSlug) {
+            console.error('ERROR: "repoSlug" parameter is required');
             this.rl.prompt();
             return;
           }
@@ -186,8 +181,8 @@ export class wrapper {
           break;
 
         case 'list-pullrequests':
-          if (!args.workspace || !args.repoSlug) {
-            console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+          if (!args.repoSlug) {
+            console.error('ERROR: "repoSlug" parameter is required');
             this.rl.prompt();
             return;
           }
@@ -195,8 +190,8 @@ export class wrapper {
           break;
 
         case 'get-pullrequest':
-          if (!args.workspace || !args.repoSlug || !args.pullRequestId) {
-            console.error('ERROR: "workspace", "repoSlug", and "pullRequestId" parameters are required');
+          if (!args.repoSlug || !args.pullRequestId) {
+            console.error('ERROR: "repoSlug" and "pullRequestId" parameters are required');
             this.rl.prompt();
             return;
           }
@@ -204,9 +199,9 @@ export class wrapper {
           break;
 
         case 'create-pullrequest':
-          if (!args.workspace || !args.repoSlug || !args.title || !args.sourceBranch || !args.destinationBranch) {
+          if (!args.repoSlug || !args.title || !args.sourceBranch || !args.destinationBranch) {
             console.error(
-              'ERROR: "workspace", "repoSlug", "title", "sourceBranch", and "destinationBranch" parameters are required'
+              'ERROR: "repoSlug", "title", "sourceBranch", and "destinationBranch" parameters are required'
             );
             this.rl.prompt();
             return;
@@ -224,8 +219,8 @@ export class wrapper {
           break;
 
         case 'list-branches':
-          if (!args.workspace || !args.repoSlug) {
-            console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+          if (!args.repoSlug) {
+            console.error('ERROR: "repoSlug" parameter is required');
             this.rl.prompt();
             return;
           }
@@ -233,8 +228,8 @@ export class wrapper {
           break;
 
         case 'list-commits':
-          if (!args.workspace || !args.repoSlug) {
-            console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+          if (!args.repoSlug) {
+            console.error('ERROR: "repoSlug" parameter is required');
             this.rl.prompt();
             return;
           }
@@ -242,8 +237,8 @@ export class wrapper {
           break;
 
         case 'list-issues':
-          if (!args.workspace || !args.repoSlug) {
-            console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+          if (!args.repoSlug) {
+            console.error('ERROR: "repoSlug" parameter is required');
             this.rl.prompt();
             return;
           }
@@ -251,8 +246,8 @@ export class wrapper {
           break;
 
         case 'get-issue':
-          if (!args.workspace || !args.repoSlug || !args.issueId) {
-            console.error('ERROR: "workspace", "repoSlug", and "issueId" parameters are required');
+          if (!args.repoSlug || !args.issueId) {
+            console.error('ERROR: "repoSlug" and "issueId" parameters are required');
             this.rl.prompt();
             return;
           }
@@ -260,8 +255,8 @@ export class wrapper {
           break;
 
         case 'create-issue':
-          if (!args.workspace || !args.repoSlug || !args.title) {
-            console.error('ERROR: "workspace", "repoSlug", and "title" parameters are required');
+          if (!args.repoSlug || !args.title) {
+            console.error('ERROR: "repoSlug" and "title" parameters are required');
             this.rl.prompt();
             return;
           }
@@ -278,8 +273,8 @@ export class wrapper {
           break;
 
         case 'list-pipelines':
-          if (!args.workspace || !args.repoSlug) {
-            console.error('ERROR: "workspace" and "repoSlug" parameters are required');
+          if (!args.repoSlug) {
+            console.error('ERROR: "repoSlug" parameter is required');
             this.rl.prompt();
             return;
           }

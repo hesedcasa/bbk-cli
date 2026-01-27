@@ -28,12 +28,12 @@ async function initBitbucket(): Promise<BitbucketUtil> {
 /**
  * List all repositories in a workspace
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param format - Output format (json, toon)
  */
 export async function listRepositories(
   profile: string,
-  workspace: string,
+  workspace?: string,
   format: 'json' | 'toon' = 'json'
 ): Promise<ApiResult> {
   const bitbucket = await initBitbucket();
@@ -43,13 +43,13 @@ export async function listRepositories(
 /**
  * Get repository details
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param format - Output format (json, toon)
  */
 export async function getRepository(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   format: 'json' | 'toon' = 'json'
 ): Promise<ApiResult> {
@@ -60,14 +60,14 @@ export async function getRepository(
 /**
  * List pull requests in a repository
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param state - Pull request state (optional)
  * @param format - Output format (json, toon)
  */
 export async function listPullRequests(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   state?: string,
   format: 'json' | 'toon' = 'json'
@@ -79,14 +79,14 @@ export async function listPullRequests(
 /**
  * Get pull request details
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param pullRequestId - Pull request ID
  * @param format - Output format (json, toon)
  */
 export async function getPullRequest(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   pullRequestId: number,
   format: 'json' | 'toon' = 'json'
@@ -98,7 +98,7 @@ export async function getPullRequest(
 /**
  * Create a new pull request
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param title - Pull request title
  * @param sourceBranch - Source branch name
@@ -108,7 +108,7 @@ export async function getPullRequest(
  */
 export async function createPullRequest(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   title: string,
   sourceBranch: string,
@@ -132,7 +132,7 @@ export async function createPullRequest(
 /**
  * List branches in a repository
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param q - Query string to filter branches
  * @param sort - Sort field
@@ -140,7 +140,7 @@ export async function createPullRequest(
  */
 export async function listBranches(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   q?: string,
   sort?: string,
@@ -153,14 +153,14 @@ export async function listBranches(
 /**
  * List commits in a repository
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param branch - Branch name (optional)
  * @param format - Output format (json, toon)
  */
 export async function listCommits(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   branch?: string,
   format: 'json' | 'toon' = 'json'
@@ -172,13 +172,13 @@ export async function listCommits(
 /**
  * List issues in a repository
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param format - Output format (json, toon)
  */
 export async function listIssues(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   format: 'json' | 'toon' = 'json'
 ): Promise<ApiResult> {
@@ -189,14 +189,14 @@ export async function listIssues(
 /**
  * Get issue details
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param issueId - Issue ID
  * @param format - Output format (json, toon)
  */
 export async function getIssue(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   issueId: number,
   format: 'json' | 'toon' = 'json'
@@ -208,7 +208,7 @@ export async function getIssue(
 /**
  * Create a new issue
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param title - Issue title
  * @param content - Issue content/description (optional)
@@ -218,7 +218,7 @@ export async function getIssue(
  */
 export async function createIssue(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   title: string,
   content?: string,
@@ -233,13 +233,13 @@ export async function createIssue(
 /**
  * List pipelines in a repository
  * @param profile - Bitbucket profile name
- * @param workspace - Workspace ID or slug
+ * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
  * @param repoSlug - Repository slug
  * @param format - Output format (json, toon)
  */
 export async function listPipelines(
   profile: string,
-  workspace: string,
+  workspace: string | undefined,
   repoSlug: string,
   format: 'json' | 'toon' = 'json'
 ): Promise<ApiResult> {

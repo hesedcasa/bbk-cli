@@ -7,7 +7,8 @@ import yaml from 'yaml';
  */
 interface BitbucketProfile {
   email: string;
-  apiToken: string; // Bitbucket API token
+  apiToken: string; // Bitbucket App Password for Basic authentication
+  defaultWorkspace?: string; // Default workspace for this profile
 }
 
 /**
@@ -33,7 +34,7 @@ export interface Config {
 interface BitbucketClientOptions {
   auth: {
     email: string;
-    apiToken: string; // Bitbucket API token
+    apiToken: string; // Bitbucket App Password for Basic authentication
   };
 }
 

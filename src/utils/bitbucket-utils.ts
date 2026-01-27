@@ -20,7 +20,7 @@ export interface ApiResult {
  */
 interface BitbucketClientAuth {
   email: string;
-  apiToken: string; // Bitbucket API token
+  apiToken: string; // Bitbucket App Password for Basic authentication
 }
 
 /**
@@ -156,6 +156,25 @@ export class BitbucketUtil {
   }
 
   /**
+   * Get the default workspace for a profile
+   * @param profileName - Name of the profile to get the default workspace for
+   * @returns The default workspace string configured for the profile
+   * @throws Error if profile is not found or defaultWorkspace is not configured
+   */
+  getDefaultWorkspace(profileName: string): string {
+    const profile = this.config.profiles[profileName];
+    if (!profile) {
+      throw new Error(`Profile "${profileName}" not found`);
+    }
+    if (!profile.defaultWorkspace) {
+      throw new Error(
+        `No default workspace configured for profile "${profileName}". Please provide a workspace parameter or set defaultWorkspace in your profile configuration.`
+      );
+    }
+    return profile.defaultWorkspace;
+  }
+
+  /**
    * Make authenticated request to Bitbucket API
    */
   private async makeRequest(
@@ -225,12 +244,22 @@ export class BitbucketUtil {
 
   /**
    * List all repositories in a workspace
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
-  async listRepositories(profileName: string, workspace: string, format: 'json' | 'toon' = 'json'): Promise<ApiResult> {
+  async listRepositories(
+    profileName: string,
+    workspace?: string,
+    format: 'json' | 'toon' = 'json'
+  ): Promise<ApiResult> {
     try {
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       const response = (await this.makeRequest(
         profileName,
-        `/repositories/${workspace}`
+        `/repositories/${resolvedWorkspace}`
       )) as BitbucketPaginatedResponse<BitbucketRepository>;
 
       // Simplify repository data for display
@@ -261,15 +290,22 @@ export class BitbucketUtil {
 
   /**
    * Get repository details
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async getRepository(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      const response = await this.makeRequest(profileName, `/repositories/${workspace}/${repoSlug}`);
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
+      const response = await this.makeRequest(profileName, `/repositories/${resolvedWorkspace}/${repoSlug}`);
 
       return {
         success: true,
@@ -287,16 +323,24 @@ export class BitbucketUtil {
 
   /**
    * List pull requests in a repository
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param state - Filter by state (OPEN, MERGED, DECLINED, SUPERSEDED)
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async listPullRequests(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     state?: string,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      let endpoint = `/repositories/${workspace}/${repoSlug}/pullrequests`;
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
+      let endpoint = `/repositories/${resolvedWorkspace}/${repoSlug}/pullrequests`;
 
       if (state) {
         endpoint += `?state=${state}`;
@@ -336,18 +380,26 @@ export class BitbucketUtil {
 
   /**
    * Get pull request details
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param pullRequestId - Pull request ID
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async getPullRequest(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     pullRequestId: number,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       const response = await this.makeRequest(
         profileName,
-        `/repositories/${workspace}/${repoSlug}/pullrequests/${pullRequestId}`
+        `/repositories/${resolvedWorkspace}/${repoSlug}/pullrequests/${pullRequestId}`
       );
 
       return {
@@ -366,16 +418,22 @@ export class BitbucketUtil {
 
   /**
    * Get default reviewers for a repository
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @returns Array of reviewer UUIDs
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async getDefaultReviewers(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string
   ): Promise<Array<{ uuid: string }>> {
     try {
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       const response = (await this.makeRequest(
         profileName,
-        `/repositories/${workspace}/${repoSlug}/effective-default-reviewers`
+        `/repositories/${resolvedWorkspace}/${repoSlug}/effective-default-reviewers`
       )) as BitbucketPaginatedResponse<BitbucketReviewer>;
 
       // Extract user UUIDs from the response
@@ -391,10 +449,19 @@ export class BitbucketUtil {
 
   /**
    * Create a new pull request
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param title - Pull request title
+   * @param sourceBranch - Source branch name
+   * @param destinationBranch - Destination branch name
+   * @param description - Pull request description (optional)
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async createPullRequest(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     title: string,
     sourceBranch: string,
@@ -403,10 +470,12 @@ export class BitbucketUtil {
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       // Fetch the current authenticated user and default reviewers in parallel
       const [currentUserResponse, defaultReviewers] = await Promise.all([
         this.makeRequest(profileName, '/user'),
-        this.getDefaultReviewers(profileName, workspace, repoSlug),
+        this.getDefaultReviewers(profileName, resolvedWorkspace, repoSlug),
       ]);
 
       const currentUserUuid = (currentUserResponse as BitbucketUser).uuid;
@@ -437,7 +506,7 @@ export class BitbucketUtil {
 
       const response = await this.makeRequest(
         profileName,
-        `/repositories/${workspace}/${repoSlug}/pullrequests`,
+        `/repositories/${resolvedWorkspace}/${repoSlug}/pullrequests`,
         'POST',
         body
       );
@@ -458,17 +527,26 @@ export class BitbucketUtil {
 
   /**
    * List branches in a repository
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param q - Query filter for branch names (optional)
+   * @param sort - Sort order (optional)
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async listBranches(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     q?: string,
     sort?: string,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      let endpoint = `/repositories/${workspace}/${repoSlug}/refs/branches`;
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
+      let endpoint = `/repositories/${resolvedWorkspace}/${repoSlug}/refs/branches`;
 
       const params: string[] = [];
       if (q && q.trim() !== '') {
@@ -510,16 +588,24 @@ export class BitbucketUtil {
 
   /**
    * List commits in a repository
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param branch - Branch name to limit commits to (optional)
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async listCommits(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     branch?: string,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      let endpoint = `/repositories/${workspace}/${repoSlug}/commits`;
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
+      let endpoint = `/repositories/${resolvedWorkspace}/${repoSlug}/commits`;
 
       if (branch) {
         endpoint += `/${branch}`;
@@ -551,17 +637,24 @@ export class BitbucketUtil {
 
   /**
    * List issues in a repository
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async listIssues(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       const response = (await this.makeRequest(
         profileName,
-        `/repositories/${workspace}/${repoSlug}/issues`
+        `/repositories/${resolvedWorkspace}/${repoSlug}/issues`
       )) as BitbucketPaginatedResponse<BitbucketIssue>;
 
       const issues = response.values || [];
@@ -591,16 +684,27 @@ export class BitbucketUtil {
 
   /**
    * Get issue details
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param issueId - Issue ID
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async getIssue(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     issueId: number,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
-      const response = await this.makeRequest(profileName, `/repositories/${workspace}/${repoSlug}/issues/${issueId}`);
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
+      const response = await this.makeRequest(
+        profileName,
+        `/repositories/${resolvedWorkspace}/${repoSlug}/issues/${issueId}`
+      );
 
       return {
         success: true,
@@ -618,10 +722,19 @@ export class BitbucketUtil {
 
   /**
    * Create a new issue
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param title - Issue title
+   * @param content - Issue content/description (optional)
+   * @param kind - Issue kind (bug, enhancement, proposal, task) (optional)
+   * @param priority - Issue priority (trivial, minor, major, critical, blocker) (optional)
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async createIssue(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     title: string,
     content?: string,
@@ -630,6 +743,8 @@ export class BitbucketUtil {
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       const issueData: Record<string, unknown> = { title };
 
       if (content) {
@@ -644,7 +759,7 @@ export class BitbucketUtil {
 
       const response = await this.makeRequest(
         profileName,
-        `/repositories/${workspace}/${repoSlug}/issues`,
+        `/repositories/${resolvedWorkspace}/${repoSlug}/issues`,
         'POST',
         issueData
       );
@@ -665,17 +780,24 @@ export class BitbucketUtil {
 
   /**
    * List pipelines in a repository
+   * @param profileName - Bitbucket profile name
+   * @param workspace - Workspace ID or slug (optional, uses profile default if not provided)
+   * @param repoSlug - Repository slug identifier
+   * @param format - Output format (json, toon)
+   * @throws Error if neither workspace parameter nor profile defaultWorkspace is configured
    */
   async listPipelines(
     profileName: string,
-    workspace: string,
+    workspace: string | undefined,
     repoSlug: string,
     format: 'json' | 'toon' = 'json'
   ): Promise<ApiResult> {
     try {
+      // Resolve workspace: use provided parameter or fall back to profile's default workspace
+      const resolvedWorkspace = workspace || this.getDefaultWorkspace(profileName);
       const response = (await this.makeRequest(
         profileName,
-        `/repositories/${workspace}/${repoSlug}/pipelines/`
+        `/repositories/${resolvedWorkspace}/${repoSlug}/pipelines/`
       )) as BitbucketPaginatedResponse<BitbucketPipeline>;
 
       const pipelines = response.values || [];

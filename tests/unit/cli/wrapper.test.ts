@@ -431,7 +431,7 @@ describe('cli/wrapper', () => {
 
         await cli['runCommand']('get-repository', '{}');
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "workspace" and "repoSlug" parameters are required');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" parameter is required');
         expect(mockRlInterface.prompt).toHaveBeenCalled();
 
         consoleErrorSpy.mockRestore();
@@ -466,9 +466,7 @@ describe('cli/wrapper', () => {
 
         await cli['runCommand']('get-issue', '{}');
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'ERROR: "workspace", "repoSlug", and "issueId" parameters are required'
-        );
+        expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" and "issueId" parameters are required');
         expect(mockRlInterface.prompt).toHaveBeenCalled();
 
         consoleErrorSpy.mockRestore();
@@ -503,9 +501,7 @@ describe('cli/wrapper', () => {
 
         await cli['runCommand']('create-issue', '{"workspace":"myworkspace"}');
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-          'ERROR: "workspace", "repoSlug", and "title" parameters are required'
-        );
+        expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" and "title" parameters are required');
         expect(mockRlInterface.prompt).toHaveBeenCalled();
 
         consoleErrorSpy.mockRestore();
@@ -528,7 +524,7 @@ describe('cli/wrapper', () => {
 
         await cli['runCommand']('list-branches', '{}');
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "workspace" and "repoSlug" parameters are required');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('ERROR: "repoSlug" parameter is required');
         expect(mockRlInterface.prompt).toHaveBeenCalled();
 
         consoleErrorSpy.mockRestore();
