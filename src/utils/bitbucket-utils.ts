@@ -20,7 +20,7 @@ export interface ApiResult {
  */
 interface BitbucketClientAuth {
   email: string;
-  apiToken: string; // Bitbucket App Password for Basic authentication
+  apiToken: string; // Bitbucket API token for Basic authentication
 }
 
 /**

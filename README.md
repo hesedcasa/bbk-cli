@@ -9,9 +9,10 @@ A powerful command-line interface for Bitbucket interaction with support for rep
 - 💻 **Interactive REPL** for Bitbucket exploration and management
 - 🚀 **Headless mode** for one-off command execution and automation
 - 🔐 **Multi-profile support** for managing different Bitbucket accounts
+- 🏢 **Default workspace support** - omit workspace parameter when configured
 - 📊 **Multiple output formats**: JSON or TOON
 - 📦 **Repository management**: list and view repository details
-- 🔀 **Pull request operations**: list, view, and create pull requests
+- 🔀 **Pull request operations**: list, view, and create pull requests with auto-reviewers
 - 🐛 **Issue tracking**: list, view, and create issues
 - 🌿 **Branch operations**: list branches in repositories
 - 📝 **Commit history**: view commits in repositories
@@ -50,6 +51,7 @@ profiles:
   cloud:
     email: your-email@example.com
     apiToken: YOUR_API_TOKEN_HERE
+    defaultWorkspace: myworkspace # Optional: default workspace for commands
 
 defaultProfile: cloud
 defaultFormat: json
@@ -65,6 +67,7 @@ This file stores your Bitbucket API connection profiles.
 - **profiles**: Named Bitbucket connection profiles
   - `email`: Your Bitbucket email
   - `apiToken`: Your Bitbucket API token
+  - `defaultWorkspace`: (Optional) Default workspace to use if not specified in commands
 
 - **defaultProfile**: Profile name to use when none specified
 - **defaultFormat**: Default output format (`json` or `toon`)
@@ -77,10 +80,12 @@ profiles:
   personal:
     email: john@email.com
     apiToken: <api_token>
+    defaultWorkspace: personal-workspace
 
   work:
     email: john@company.com
     apiToken: <api_token>
+    defaultWorkspace: company-workspace
 
 defaultProfile: personal
 defaultFormat: json
@@ -101,8 +106,11 @@ Once started, you'll see the `bbk>` prompt:
 
 ```
 bbk> list-repositories {"workspace":"myworkspace"}
+bbk> list-repositories {}              # Uses profile's defaultWorkspace
 bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> get-repository {"repoSlug":"my-repo"}  # Uses profile's defaultWorkspace
 bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
+bbk> list-pullrequests {"repoSlug":"my-repo","state":"OPEN"}  # Uses defaultWorkspace
 ```
 
 ### Headless Mode
@@ -172,6 +180,8 @@ npx bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title
   bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
   bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","description":"PR description"}
   ```
+
+  **Note**: This command automatically adds the repository's default reviewers (excluding the PR author) to the pull request.
 
 ### Branch Commands
 
@@ -375,7 +385,3 @@ npx bbk-cli test-connection
 ## License
 
 Apache-2.0
-
-## Acknowledgments
-
-Built with [bitbucket](https://www.npmjs.com/package/bitbucket) by [MunifTanjim](https://github.com/MunifTanjim/node-bitbucket) - A Bitbucket API client for Node.js and Browser

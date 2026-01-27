@@ -27,6 +27,10 @@ npm run test:coverage       # Run tests with coverage report
 npm run format              # Format code with ESLint and Prettier
 npm run find-deadcode       # Find unused exports with ts-prune
 npm run pre-commit          # Run format + find-deadcode
+
+# Run single test file (pattern match)
+npx vitest run list-repositories
+npx vitest run --grep "test name"
 ```
 
 ## Project Architecture
@@ -129,21 +133,23 @@ The CLI loads Bitbucket profiles from `.claude/bitbucket-config.local.md` with Y
 ```yaml
 ---
 profiles:
-  cloud:
+  default:
     email: your-email@example.com
-    apiToken: YOUR_BITBUCKET_APP_PASSWORD_HERE
+    apiToken: YOUR_BITBUCKET_API_TOKEN_HERE
+    defaultWorkspace: myworkspace # Optional: default workspace for commands
 
-defaultProfile: cloud
+defaultProfile: default
 defaultFormat: json
 ---
 ```
 
 **Key behaviors:**
 
-- Uses Bitbucket **App Passwords** (not API tokens) for authentication
+- Uses Bitbucket API tokens for authentication
 - Basic authentication header: `Authorization: Basic base64(email:apiToken)`
 - Configuration is validated on load with email format validation
 - Multi-profile support for different Bitbucket workspaces/accounts
+- **defaultWorkspace per profile**: Commands can omit the workspace parameter if a default is configured in the profile
 
 ### REPL Interface
 
@@ -202,6 +208,7 @@ bbk> profiles                          # List available profiles
 bbk> profile production                # Switch profile
 bbk> format json                       # Change output format
 bbk> list-repositories {"workspace":"myworkspace"}
+bbk> list-repositories {}              # Uses profile's defaultWorkspace
 bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
 bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
 bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
@@ -290,6 +297,7 @@ npx bbk-cli --version         # Show version
 - **Signal Handling**: Graceful shutdown on Ctrl+C (SIGINT) and SIGTERM
 - **Error Handling**: Try-catch blocks with user-friendly error messages
 - **Configuration**: YAML frontmatter in `.claude/bitbucket-config.local.md`
+- **Default Workspace Resolution**: All commands that accept a `workspace` parameter will use the profile's `defaultWorkspace` if no workspace is provided. See `getDefaultWorkspace()` in `bitbucket-utils.ts:164`.
 
 ## Dependencies
 
@@ -354,11 +362,12 @@ tests/
 
 1. **Configuration Required**: CLI requires `.claude/bitbucket-config.local.md` with valid Bitbucket profiles
 2. **ES2022 Modules**: Project uses `"type": "module"` - no CommonJS
-3. **API Authentication**: Uses Bitbucket App Passwords with Basic authentication
+3. **API Authentication**: Uses Bitbucket API tokens with Basic authentication
 4. **Multi-Profile**: Supports multiple Bitbucket workspaces/accounts
 5. **Flexible Output**: JSON or TOON formats for different use cases
 6. **Auth Pooling**: Reuses credentials per profile for better performance
 7. **No External Client**: Direct REST API calls using native fetch, not a Bitbucket client library
+8. **PR Creation Auto-Reviewers**: The `create-pullrequest` command automatically adds default reviewers (excluding the author) by fetching the repository's effective default reviewers via the Bitbucket API (see `getDefaultReviewers()` in `bitbucket-utils.ts:427`)
 
 ## Commit Message Convention
 
