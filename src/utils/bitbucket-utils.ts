@@ -826,13 +826,20 @@ export class BitbucketUtil {
 
   /**
    * Get user information
+   * @param profileName - Bitbucket profile name
+   * @param userId - User UUID (optional, if not provided returns current authenticated user)
+   * @param format - Output format (json, toon)
    */
-  async getUser(profileName: string, username?: string, format: 'json' | 'toon' = 'json'): Promise<ApiResult> {
+  async getUser(profileName: string, userId?: string, format: 'json' | 'toon' = 'json'): Promise<ApiResult> {
     try {
       let endpoint: string;
 
-      if (username) {
-        endpoint = `/users/${username}`;
+      if (userId) {
+        // Get specific user by UUID/account_id
+        // Bitbucket UUIDs include curly braces
+        // The braces must be URL-encoded in the request (%7B and %7D)
+        const cleanUuid = `{${userId}}`;
+        endpoint = `/users/${encodeURIComponent(cleanUuid)}`;
       } else {
         // Get current authenticated user
         endpoint = `/user`;

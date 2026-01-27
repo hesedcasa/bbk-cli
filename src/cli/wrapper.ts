@@ -282,7 +282,7 @@ export class wrapper {
           break;
 
         case 'get-user':
-          result = await getUser(profile, args.username, format);
+          result = await getUser(profile, args.userId, format);
           break;
 
         case 'test-connection':

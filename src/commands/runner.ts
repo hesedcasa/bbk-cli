@@ -143,7 +143,7 @@ export const runCommand = async (
         break;
 
       case 'get-user':
-        result = await getUser(profile, args.username, format);
+        result = await getUser(profile, args.userId, format);
         break;
 
       case 'test-connection':

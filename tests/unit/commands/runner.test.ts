@@ -525,7 +525,7 @@ describe('commands/runner', () => {
       consoleLogSpy.mockRestore();
     });
 
-    it('should execute get-user with username', async () => {
+    it('should execute get-user with userId', async () => {
       const { getUser, loadConfig } = await import('../../../src/utils/index.js');
       loadConfig.mockReturnValue({
         profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
@@ -537,9 +537,9 @@ describe('commands/runner', () => {
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      await runCommand('get-user', '{"username":"testuser"}', null);
+      await runCommand('get-user', '{"userId":"5b10a2844c20165700ede21g"}', null);
 
-      expect(getUser).toHaveBeenCalledWith('cloud', 'testuser', 'json');
+      expect(getUser).toHaveBeenCalledWith('cloud', '5b10a2844c20165700ede21g', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"displayName":"User"}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
