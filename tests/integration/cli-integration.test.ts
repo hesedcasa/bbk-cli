@@ -32,13 +32,14 @@ vi.mock('../../src/commands/helpers.js', () => ({
 
 describe('CLI Integration', () => {
   let testConfigDir: string;
-  let originalHomedir: string;
+  let homedirSpy: ReturnType<typeof vi.spyOn>;
   let configPath: string;
 
   beforeEach(() => {
     testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-integration-'));
-    originalHomedir = process.env.HOME || '';
-    process.env.HOME = testConfigDir;
+    
+    // Spy on os.homedir() to return test directory (works on all platforms)
+    homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
 
     configPath = path.join(testConfigDir, '.bbkcli');
 
@@ -59,7 +60,9 @@ format=json
 
   afterEach(() => {
     fs.rmSync(testConfigDir, { recursive: true, force: true });
-    process.env.HOME = originalHomedir;
+    
+    // Restore original os.homedir()
+    homedirSpy.mockRestore();
   });
 
   describe('Config Loading Integration', () => {
