@@ -26,13 +26,14 @@ vi.mock('readline', () => ({
 describe('config-loader', () => {
   describe('loadConfig', () => {
     let testConfigDir: string;
-    let originalHomedir: string;
+    let homedirSpy: vi.SpyInstance;
 
     beforeEach(() => {
       // Create a temporary directory for test configs
       testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-test-'));
-      originalHomedir = process.env.HOME || '';
-      process.env.HOME = testConfigDir;
+      
+      // Spy on os.homedir() to return test directory (works on all platforms)
+      homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
     });
 
     afterEach(() => {
@@ -40,7 +41,10 @@ describe('config-loader', () => {
       if (testConfigDir) {
         fs.rmSync(testConfigDir, { recursive: true, force: true });
       }
-      process.env.HOME = originalHomedir;
+      
+      // Restore original os.homedir()
+      homedirSpy.mockRestore();
+      
       // Clear mock calls
       vi.clearAllMocks();
     });
@@ -152,19 +156,23 @@ format=json
 
   describe('setupConfig', () => {
     let testConfigDir: string;
-    let originalHomedir: string;
+    let homedirSpy: vi.SpyInstance;
 
     beforeEach(() => {
       testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-test-'));
-      originalHomedir = process.env.HOME || '';
-      process.env.HOME = testConfigDir;
+      
+      // Spy on os.homedir() to return test directory (works on all platforms)
+      homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
     });
 
     afterEach(() => {
       if (testConfigDir) {
         fs.rmSync(testConfigDir, { recursive: true, force: true });
       }
-      process.env.HOME = originalHomedir;
+      
+      // Restore original os.homedir()
+      homedirSpy.mockRestore();
+      
       vi.clearAllMocks();
     });
 
