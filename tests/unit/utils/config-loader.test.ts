@@ -203,6 +203,9 @@ format=json
         const stats = fs.statSync(configPath);
         const mode = stats.mode & 0o777;
         expect(mode).toBe(0o600);
+      } else {
+        // On Windows, verify the file was created (already checked above, but being explicit)
+        expect(fs.existsSync(configPath)).toBe(true);
       }
     });
 
