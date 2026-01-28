@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'node:path';
-import os from 'os';
+import os from 'node:os';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the Bitbucket API functions - must be at top level but without external references
@@ -32,7 +32,7 @@ vi.mock('../../src/commands/helpers.js', () => ({
 
 describe('CLI Integration', () => {
   let testConfigDir: string;
-  let homedirSpy: ReturnType<typeof vi.spyOn>;
+  let homedirSpy: vi.SpyInstance;
   let configPath: string;
 
   beforeEach(() => {

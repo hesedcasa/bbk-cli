@@ -26,7 +26,7 @@ vi.mock('readline', () => ({
 describe('config-loader', () => {
   describe('loadConfig', () => {
     let testConfigDir: string;
-    let homedirSpy: ReturnType<typeof vi.spyOn>;
+    let homedirSpy: vi.SpyInstance;
 
     beforeEach(() => {
       // Create a temporary directory for test configs
@@ -156,7 +156,7 @@ format=json
 
   describe('setupConfig', () => {
     let testConfigDir: string;
-    let homedirSpy: ReturnType<typeof vi.spyOn>;
+    let homedirSpy: vi.SpyInstance;
 
     beforeEach(() => {
       testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-test-'));
