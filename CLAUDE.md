@@ -114,9 +114,9 @@ tests/
 - `arg-parser.ts` - Command-line argument handling
   - `parseArguments(args)` - Parses CLI flags (--help, --version, --commands) and routes to headless or interactive mode
 - `config-loader.ts` - Configuration file management
-  - `loadConfig(projectRoot)` - Loads `.claude/bitbucket-config.local.md`
-  - `getBitbucketClientOptions(config, profileName)` - Extracts email and API token for Basic auth
-  - TypeScript interfaces: `Config`, `BitbucketProfile`, `BitbucketClientOptions`
+  - `loadConfig()` - Loads `~/.bbkcli` config file
+  - `setupConfig()` - Interactive configuration setup
+  - TypeScript interfaces: `Config`
 - `bitbucket-client.ts` - Wrapper functions for all Bitbucket operations
   - Exports: `listRepositories()`, `getRepository()`, `listPullRequests()`, `getPullRequest()`, `createPullRequest()`, `listBranches()`, `listCommits()`, `listIssues()`, `getIssue()`, `createIssue()`, `listPipelines()`, `getUser()`, `testConnection()`, `clearClients()`
   - Manages singleton `BitbucketUtil` instance
@@ -124,23 +124,20 @@ tests/
   - `BitbucketUtil` class - Direct REST API calls to Bitbucket v2 API
   - Implements `makeRequest()` for authenticated HTTP requests using Basic auth
   - `formatResult()` - Outputs JSON or TOON format
-  - Auth pooling per profile for efficiency
+  - Auth credentials are cached per workspace for efficiency
 
 ### Configuration System
 
-The CLI loads Bitbucket profiles from `.claude/bitbucket-config.local.md` with YAML frontmatter:
+The CLI loads Bitbucket credentials from `~/.bbkcli` INI-style config file:
 
-```yaml
----
-profiles:
-  default:
-    email: your-email@example.com
-    apiToken: YOUR_BITBUCKET_API_TOKEN_HERE
-    defaultWorkspace: myworkspace # Optional: default workspace for commands
+```ini
+[auth]
+email=your-email@example.com
+api_token=YOUR_BITBUCKET_API_TOKEN_HERE
 
-defaultProfile: default
-defaultFormat: json
----
+[defaults]
+workspace=myworkspace
+format=json
 ```
 
 **Key behaviors:**
@@ -148,13 +145,12 @@ defaultFormat: json
 - Uses Bitbucket API tokens for authentication
 - Basic authentication header: `Authorization: Basic base64(email:apiToken)`
 - Configuration is validated on load with email format validation
-- Multi-profile support for different Bitbucket workspaces/accounts
-- **defaultWorkspace per profile**: Commands can omit the workspace parameter if a default is configured in the profile
+- Optional default workspace and format can be specified in the `[defaults]` section
 
 ### REPL Interface
 
 - Custom prompt: `bbk>`
-- **Special commands**: `help`, `commands`, `profiles`, `profile <name>`, `format <type>`, `clear`, `exit/quit/q`
+- **Special commands**: `help`, `commands`, `format <type>`, `clear`, `exit/quit/q`
 - **Bitbucket commands**: 13 commands accepting JSON arguments
   1. `list-repositories` - List all repositories in a workspace
   2. `get-repository` - Get details of a specific repository
@@ -204,19 +200,15 @@ npm start
 # Inside the REPL:
 bbk> commands                          # List all 13 commands
 bbk> help                              # Show help
-bbk> profiles                          # List available profiles
-bbk> profile production                # Switch profile
 bbk> format json                       # Change output format
 bbk> list-repositories {"workspace":"myworkspace"}
-bbk> list-repositories {}              # Uses profile's defaultWorkspace
+bbk> list-repositories                 # Uses default workspace from config
 bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
 bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
 bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
 bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo","q":"name~\"feature\""}
-bbk> get-user {}                        # Get current authenticated user
-bbk> get-user {"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15
-
-"}  # Get specific user by UUID
+bbk> get-user                           # Get current authenticated user
+bbk> get-user {"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15"}  # Get specific user by UUID
 bbk> exit                              # Exit
 
 # Headless mode (one-off commands):
@@ -239,7 +231,7 @@ npx bbk-cli --version         # Show version
 ### CLI Class (`cli/wrapper.ts`)
 
 - Interactive REPL management with readline
-- Configuration loading and profile switching
+- Configuration loading
 - User command processing and validation
 - Bitbucket command execution with result formatting
 - Graceful shutdown handling (SIGINT/SIGTERM)
@@ -264,11 +256,11 @@ npx bbk-cli --version         # Show version
 
 ### Config Loader (`utils/config-loader.ts`)
 
-- Reads and parses `.claude/bitbucket-config.local.md`
-- Extracts YAML frontmatter with Bitbucket profiles
-- Validates required fields (email, apiToken) for each profile
+- Reads and parses `~/.bbkcli` INI config file
+- Validates required fields (email, apiToken)
 - Email format validation using regex
 - Provides default values for settings
+- Interactive config setup via `setupConfig()`
 
 ### Bitbucket Client (`utils/bitbucket-client.ts`)
 
@@ -279,7 +271,7 @@ npx bbk-cli --version         # Show version
 ### Bitbucket Utils (`utils/bitbucket-utils.ts`)
 
 - **Core Bitbucket interaction logic using native fetch**
-- Client pooling per profile (auth credentials cached)
+- Auth credentials are cached per workspace for efficiency
 - API call execution to `https://api.bitbucket.org/2.0`
 - Result formatting (JSON, TOON)
 - All 13 command implementations
@@ -297,17 +289,16 @@ npx bbk-cli --version         # Show version
 - **Barrel Exports**: Each module directory has `index.ts` exporting public APIs
 - **ES Modules**: All imports use `.js` extensions (TypeScript requirement)
 - **Argument Parsing**: Supports JSON arguments for command parameters
-- **Auth Pooling**: Reuses Basic auth credentials per profile for efficiency
+- **Auth Credential Caching**: Reuses Basic auth credentials per workspace for efficiency
 - **Signal Handling**: Graceful shutdown on Ctrl+C (SIGINT) and SIGTERM
 - **Error Handling**: Try-catch blocks with user-friendly error messages
-- **Configuration**: YAML frontmatter in `.claude/bitbucket-config.local.md`
-- **Default Workspace Resolution**: All commands that accept a `workspace` parameter will use the profile's `defaultWorkspace` if no workspace is provided. See `getDefaultWorkspace()` in `bitbucket-utils.ts:164`.
+- **Configuration**: INI-style config file at `~/.bbkcli`
+- **Default Workspace Resolution**: All commands that accept a `workspace` parameter will use the default workspace from config if no workspace is provided.
 
 ## Dependencies
 
 **Runtime**:
 
-- `yaml@^2.8.1` - YAML parser for config files
 - `@toon-format/toon@^2.0.1` - TOON format encoder
 - **No Bitbucket client library** - Uses native `fetch` with Basic auth
 
@@ -364,14 +355,13 @@ tests/
 
 ## Important Notes
 
-1. **Configuration Required**: CLI requires `.claude/bitbucket-config.local.md` with valid Bitbucket profiles
+1. **Configuration Required**: CLI requires `~/.bbkcli` config file with valid Bitbucket credentials
 2. **ES2022 Modules**: Project uses `"type": "module"` - no CommonJS
 3. **API Authentication**: Uses Bitbucket API tokens with Basic authentication
-4. **Multi-Profile**: Supports multiple Bitbucket workspaces/accounts
-5. **Flexible Output**: JSON or TOON formats for different use cases
-6. **Auth Pooling**: Reuses credentials per profile for better performance
-7. **No External Client**: Direct REST API calls using native fetch, not a Bitbucket client library
-8. **PR Creation Auto-Reviewers**: The `create-pullrequest` command automatically adds default reviewers (excluding the author) by fetching the repository's effective default reviewers via the Bitbucket API (see `getDefaultReviewers()` in `bitbucket-utils.ts:427`)
+4. **Flexible Output**: JSON or TOON formats for different use cases
+5. **Auth Credential Caching**: Reuses credentials per workspace for better performance
+6. **No External Client**: Direct REST API calls using native fetch, not a Bitbucket client library
+7. **PR Creation Auto-Reviewers**: The `create-pullrequest` command automatically adds default reviewers (excluding the author) by fetching the repository's effective default reviewers via the Bitbucket API (see `getDefaultReviewers()` in `bitbucket-utils.ts:427`)
 
 ## Commit Message Convention
 

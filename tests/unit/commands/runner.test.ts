@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { runCommand } from '../../../src/commands/runner.js';
 
@@ -19,6 +19,7 @@ vi.mock('../../../src/utils/index.js', () => ({
   testConnection: vi.fn(),
   loadConfig: vi.fn(),
   clearClients: vi.fn(),
+  setupConfig: vi.fn(),
 }));
 
 // Mock process.env
@@ -34,14 +35,17 @@ describe('commands/runner', () => {
     process.env = originalEnv;
   });
 
+  const mockConfig = {
+    email: 'user@example.com',
+    apiToken: 'test_token',
+    defaultWorkspace: 'myworkspace',
+    defaultFormat: 'json' as const,
+  };
+
   describe('runCommand', () => {
     it('should execute list-repositories command', async () => {
       const { listRepositories, loadConfig, clearClients } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listRepositories.mockResolvedValue({ success: true, result: '{"repositories": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -51,7 +55,7 @@ describe('commands/runner', () => {
       await runCommand('list-repositories', '{"workspace":"myworkspace"}', null);
 
       expect(loadConfig).toHaveBeenCalled();
-      expect(listRepositories).toHaveBeenCalledWith('cloud', 'myworkspace', 'json');
+      expect(listRepositories).toHaveBeenCalledWith('myworkspace', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"repositories": []}');
       expect(clearClients).toHaveBeenCalled();
       expect(exitSpy).toHaveBeenCalledWith(0);
@@ -61,24 +65,17 @@ describe('commands/runner', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should execute list-repositories with custom profile and format', async () => {
+    it('should execute list-repositories with custom format', async () => {
       const { listRepositories, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: {
-          cloud: { username: 'test@test.com', password: 'password123' },
-          staging: { username: 'staging@test.com', password: 'staging-password' },
-        },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listRepositories.mockResolvedValue({ success: true, result: '{"repositories": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      await runCommand('list-repositories', '{"workspace":"myworkspace","profile":"staging","format":"toon"}', null);
+      await runCommand('list-repositories', '{"workspace":"myworkspace","format":"toon"}', null);
 
-      expect(listRepositories).toHaveBeenCalledWith('staging', 'myworkspace', 'toon');
+      expect(listRepositories).toHaveBeenCalledWith('myworkspace', 'toon');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"repositories": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -88,11 +85,7 @@ describe('commands/runner', () => {
 
     it('should execute get-repository command with workspace and repoSlug', async () => {
       const { getRepository, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       getRepository.mockResolvedValue({ success: true, result: '{"name":"my-repo"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -101,7 +94,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-repository', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(getRepository).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', 'json');
+      expect(getRepository).toHaveBeenCalledWith('myworkspace', 'my-repo', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"name":"my-repo"}');
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       expect(exitSpy).toHaveBeenCalledWith(0);
@@ -113,11 +106,7 @@ describe('commands/runner', () => {
 
     it('should exit with error if get-repository missing parameters', async () => {
       const { loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -133,11 +122,7 @@ describe('commands/runner', () => {
 
     it('should execute list-pullrequests command with all parameters', async () => {
       const { listPullRequests, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listPullRequests.mockResolvedValue({ success: true, result: '{"pullrequests": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -145,7 +130,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-pullrequests', '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}', null);
 
-      expect(listPullRequests).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', 'OPEN', 'json');
+      expect(listPullRequests).toHaveBeenCalledWith('myworkspace', 'my-repo', 'OPEN', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"pullrequests": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -155,11 +140,7 @@ describe('commands/runner', () => {
 
     it('should execute list-pullrequests with minimal parameters', async () => {
       const { listPullRequests, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listPullRequests.mockResolvedValue({ success: true, result: '{"pullrequests": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -167,7 +148,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-pullrequests', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(listPullRequests).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', undefined, 'json');
+      expect(listPullRequests).toHaveBeenCalledWith('myworkspace', 'my-repo', undefined, 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"pullrequests": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -177,11 +158,7 @@ describe('commands/runner', () => {
 
     it('should execute get-pullrequest command', async () => {
       const { getPullRequest, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       getPullRequest.mockResolvedValue({ success: true, result: '{"id":"123","title":"Test PR"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -193,7 +170,7 @@ describe('commands/runner', () => {
         null
       );
 
-      expect(getPullRequest).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', '123', 'json');
+      expect(getPullRequest).toHaveBeenCalledWith('myworkspace', 'my-repo', '123', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"id":"123","title":"Test PR"}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -203,11 +180,7 @@ describe('commands/runner', () => {
 
     it('should exit with error if get-pullrequest missing parameters', async () => {
       const { loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -223,11 +196,7 @@ describe('commands/runner', () => {
 
     it('should execute create-pullrequest command', async () => {
       const { createPullRequest, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       createPullRequest.mockResolvedValue({ success: true, result: '{"id":"456","title":"New PR"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -240,7 +209,6 @@ describe('commands/runner', () => {
       );
 
       expect(createPullRequest).toHaveBeenCalledWith(
-        'cloud',
         'myworkspace',
         'my-repo',
         'New PR',
@@ -258,11 +226,7 @@ describe('commands/runner', () => {
 
     it('should execute create-pullrequest with description', async () => {
       const { createPullRequest, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       createPullRequest.mockResolvedValue({ success: true, result: '{"id":"456","title":"New PR"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -275,7 +239,6 @@ describe('commands/runner', () => {
       );
 
       expect(createPullRequest).toHaveBeenCalledWith(
-        'cloud',
         'myworkspace',
         'my-repo',
         'New PR',
@@ -292,11 +255,7 @@ describe('commands/runner', () => {
 
     it('should exit with error if create-pullrequest missing required parameters', async () => {
       const { loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -314,11 +273,7 @@ describe('commands/runner', () => {
 
     it('should execute list-branches command', async () => {
       const { listBranches, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listBranches.mockResolvedValue({ success: true, result: '{"branches": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -326,7 +281,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-branches', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(listBranches).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', undefined, undefined, 'json');
+      expect(listBranches).toHaveBeenCalledWith('myworkspace', 'my-repo', undefined, undefined, 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"branches": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -336,11 +291,7 @@ describe('commands/runner', () => {
 
     it('should execute list-commits command', async () => {
       const { listCommits, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listCommits.mockResolvedValue({ success: true, result: '{"commits": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -348,7 +299,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-commits', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(listCommits).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', undefined, 'json');
+      expect(listCommits).toHaveBeenCalledWith('myworkspace', 'my-repo', undefined, 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"commits": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -358,11 +309,7 @@ describe('commands/runner', () => {
 
     it('should execute list-issues command', async () => {
       const { listIssues, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listIssues.mockResolvedValue({ success: true, result: '{"issues": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -370,7 +317,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-issues', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(listIssues).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', 'json');
+      expect(listIssues).toHaveBeenCalledWith('myworkspace', 'my-repo', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"issues": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -380,11 +327,7 @@ describe('commands/runner', () => {
 
     it('should execute get-issue command', async () => {
       const { getIssue, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       getIssue.mockResolvedValue({ success: true, result: '{"id":"123","title":"Test Issue"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -392,7 +335,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-issue', '{"workspace":"myworkspace","repoSlug":"my-repo","issueId":"123"}', null);
 
-      expect(getIssue).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', '123', 'json');
+      expect(getIssue).toHaveBeenCalledWith('myworkspace', 'my-repo', '123', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"id":"123","title":"Test Issue"}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -402,11 +345,7 @@ describe('commands/runner', () => {
 
     it('should exit with error if get-issue missing parameters', async () => {
       const { loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -422,11 +361,7 @@ describe('commands/runner', () => {
 
     it('should execute create-issue command', async () => {
       const { createIssue, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       createIssue.mockResolvedValue({ success: true, result: '{"id":"456","title":"New Issue"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -435,7 +370,6 @@ describe('commands/runner', () => {
       await runCommand('create-issue', '{"workspace":"myworkspace","repoSlug":"my-repo","title":"New Issue"}', null);
 
       expect(createIssue).toHaveBeenCalledWith(
-        'cloud',
         'myworkspace',
         'my-repo',
         'New Issue',
@@ -453,11 +387,7 @@ describe('commands/runner', () => {
 
     it('should execute create-issue with optional parameters', async () => {
       const { createIssue, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       createIssue.mockResolvedValue({ success: true, result: '{"id":"789"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -469,7 +399,6 @@ describe('commands/runner', () => {
       );
 
       expect(createIssue).toHaveBeenCalledWith(
-        'cloud',
         'myworkspace',
         'my-repo',
         'Bug report',
@@ -485,11 +414,7 @@ describe('commands/runner', () => {
 
     it('should exit with error if create-issue missing required parameters', async () => {
       const { loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -505,11 +430,7 @@ describe('commands/runner', () => {
 
     it('should execute list-pipelines command', async () => {
       const { listPipelines, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listPipelines.mockResolvedValue({ success: true, result: '{"pipelines": []}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -517,7 +438,7 @@ describe('commands/runner', () => {
 
       await runCommand('list-pipelines', '{"workspace":"myworkspace","repoSlug":"my-repo"}', null);
 
-      expect(listPipelines).toHaveBeenCalledWith('cloud', 'myworkspace', 'my-repo', 'json');
+      expect(listPipelines).toHaveBeenCalledWith('myworkspace', 'my-repo', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"pipelines": []}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -527,11 +448,7 @@ describe('commands/runner', () => {
 
     it('should execute get-user with userId', async () => {
       const { getUser, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       getUser.mockResolvedValue({ success: true, result: '{"displayName":"User"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -539,7 +456,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-user', '{"userId":"5b10a2844c20165700ede21g"}', null);
 
-      expect(getUser).toHaveBeenCalledWith('cloud', '5b10a2844c20165700ede21g', 'json');
+      expect(getUser).toHaveBeenCalledWith('5b10a2844c20165700ede21g', 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"displayName":"User"}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -549,11 +466,7 @@ describe('commands/runner', () => {
 
     it('should execute get-user without parameters (current user)', async () => {
       const { getUser, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       getUser.mockResolvedValue({ success: true, result: '{"displayName":"Current User"}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -561,7 +474,7 @@ describe('commands/runner', () => {
 
       await runCommand('get-user', null, null);
 
-      expect(getUser).toHaveBeenCalledWith('cloud', undefined, 'json');
+      expect(getUser).toHaveBeenCalledWith(undefined, 'json');
       expect(consoleLogSpy).toHaveBeenCalledWith('{"displayName":"Current User"}');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -571,11 +484,7 @@ describe('commands/runner', () => {
 
     it('should execute test-connection command', async () => {
       const { testConnection, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       testConnection.mockResolvedValue({ success: true, result: 'Connected successfully' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -583,7 +492,7 @@ describe('commands/runner', () => {
 
       await runCommand('test-connection', null, null);
 
-      expect(testConnection).toHaveBeenCalledWith('cloud');
+      expect(testConnection).toHaveBeenCalledWith();
       expect(consoleLogSpy).toHaveBeenCalledWith('Connected successfully');
       expect(exitSpy).toHaveBeenCalledWith(0);
 
@@ -593,11 +502,7 @@ describe('commands/runner', () => {
 
     it('should handle command failure', async () => {
       const { getRepository, loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       getRepository.mockResolvedValue({ success: false, error: 'Repository not found' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -614,11 +519,7 @@ describe('commands/runner', () => {
 
     it('should handle unknown command', async () => {
       const { loadConfig } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -634,11 +535,7 @@ describe('commands/runner', () => {
 
     it('should handle JSON parse error in arguments', async () => {
       const { loadConfig, clearClients } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -656,51 +553,9 @@ describe('commands/runner', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should use CLAUDE_PROJECT_ROOT from environment if set', async () => {
-      process.env.CLAUDE_PROJECT_ROOT = '/custom/project/root';
-      const { loadConfig, listRepositories } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
-      listRepositories.mockResolvedValue({ success: true, result: '{"repositories": []}' });
-
-      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
-
-      await runCommand('list-repositories', '{"workspace":"myworkspace"}', null);
-
-      expect(loadConfig).toHaveBeenCalledWith('/custom/project/root');
-
-      exitSpy.mockRestore();
-    });
-
-    it('should use current directory if CLAUDE_PROJECT_ROOT not set', async () => {
-      delete process.env.CLAUDE_PROJECT_ROOT;
-      const { loadConfig, listRepositories } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
-      listRepositories.mockResolvedValue({ success: true, result: '{"repositories": []}' });
-
-      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
-
-      await runCommand('list-repositories', '{"workspace":"myworkspace"}', null);
-
-      expect(loadConfig).toHaveBeenCalledWith(process.cwd());
-
-      exitSpy.mockRestore();
-    });
-
     it('should clear clients on successful execution', async () => {
       const { listRepositories, loadConfig, clearClients } = await import('../../../src/utils/index.js');
-      loadConfig.mockReturnValue({
-        profiles: { cloud: { username: 'test@test.com', password: 'password123' } },
-        defaultProfile: 'cloud',
-        defaultFormat: 'json',
-      });
+      loadConfig.mockReturnValue(mockConfig);
       listRepositories.mockResolvedValue({ success: true, result: '{}' });
 
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
@@ -747,6 +602,23 @@ describe('commands/runner', () => {
 
       exitSpy.mockRestore();
       consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle config command and call setupConfig', async () => {
+      const { setupConfig, clearClients } = await import('../../../src/utils/index.js');
+      setupConfig.mockResolvedValue(undefined);
+
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {});
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      await runCommand('config', null, null);
+
+      expect(setupConfig).toHaveBeenCalled();
+      expect(clearClients).toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(0);
+
+      exitSpy.mockRestore();
+      consoleLogSpy.mockRestore();
     });
   });
 });
