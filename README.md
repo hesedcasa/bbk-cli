@@ -33,16 +33,33 @@ npm install -g bbk-cli
 
 ## Configuration
 
-### Step 1: Create API Token
+### Recommended: Interactive Setup
+
+The easiest way to configure bbk-cli is using the interactive config command:
+
+```bash
+bbk-cli config
+```
+
+The interactive setup prompts for:
+
+1. **email** (required) - Your Bitbucket account email
+2. **api_token** (required) - Your Bitbucket API token
+3. **workspace** (optional) - Default workspace to use with commands
+4. **format** (optional) - Default output format (`json` or `toon`, defaults to `json`)
+
+### Creating an API Token
+
+Before running the config command, create an API token:
 
 1. Go to [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
 2. Click "Create API token"
 3. Give it a label (e.g., "BBK CLI")
 4. Copy the generated token
 
-### Step 2: Create Configuration File
+### Manual Configuration (Alternative)
 
-Create a configuration file at `~/.bbkcli` in your home directory:
+You can also manually create the configuration file at `~/.bbkcli`:
 
 ```ini
 [auth]
@@ -67,6 +84,16 @@ format=json
 **Tip:** Setting a default workspace in your config file allows you to omit the workspace parameter from all commands, making them much more concise. You can still specify a workspace parameter in any command if you need to work with a different workspace.
 
 ## Quick Start
+
+### First-Time Setup
+
+Before using bbk-cli, configure your credentials:
+
+```bash
+bbk-cli config
+```
+
+Follow the interactive prompts to enter your Bitbucket email and API token.
 
 ### Interactive Mode
 
@@ -94,7 +121,7 @@ bbk> list-repositories {"workspace":"other-workspace"}
 
 ### Headless Mode
 
-Execute single commands directly:
+Execute single commands directly. (Note: Run `bbk-cli config` first to set up credentials):
 
 **Tip:** Set a default workspace in your config file to omit the workspace parameter from commands.
 

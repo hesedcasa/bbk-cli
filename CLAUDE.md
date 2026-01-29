@@ -31,6 +31,9 @@ npm run pre-commit          # Run format + find-deadcode
 # Run single test file (pattern match)
 npx vitest run list-repositories
 npx vitest run --grep "test name"
+
+# Interactive configuration setup
+bbk-cli config              # Setup or update configuration
 ```
 
 ## Project Architecture
@@ -113,9 +116,11 @@ tests/
 
 - `arg-parser.ts` - Command-line argument handling
   - `parseArguments(args)` - Parses CLI flags (--help, --version, --commands) and routes to headless or interactive mode
+  - Handles `bbk-cli config` command for interactive setup
 - `config-loader.ts` - Configuration file management
   - `loadConfig()` - Loads `~/.bbkcli` config file
-  - `setupConfig()` - Interactive configuration setup
+  - `setupConfig()` - Interactive configuration setup with pre-population of existing values
+  - Reads existing config on setup to pre-fill prompts for easy updates
   - TypeScript interfaces: `Config`
 - `bitbucket-client.ts` - Wrapper functions for all Bitbucket operations
   - Exports: `listRepositories()`, `getRepository()`, `listPullRequests()`, `getPullRequest()`, `createPullRequest()`, `listBranches()`, `listCommits()`, `listIssues()`, `getIssue()`, `createIssue()`, `listPipelines()`, `getUser()`, `testConnection()`, `clearClients()`
@@ -212,6 +217,7 @@ bbk> get-user {"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15"}  # Get specific 
 bbk> exit                              # Exit
 
 # Headless mode (one-off commands):
+npx bbk-cli config            # Setup or update configuration (interactive)
 npx bbk-cli test-connection
 npx bbk-cli list-repositories '{"workspace":"myworkspace"}'
 npx bbk-cli --commands        # List all commands
@@ -292,7 +298,9 @@ npx bbk-cli --version         # Show version
 - **Auth Credential Caching**: Reuses Basic auth credentials per workspace for efficiency
 - **Signal Handling**: Graceful shutdown on Ctrl+C (SIGINT) and SIGTERM
 - **Error Handling**: Try-catch blocks with user-friendly error messages
-- **Configuration**: INI-style config file at `~/.bbkcli`
+- **Configuration**: INI-style config file at `~/.bbkcli` managed via `bbk-cli config` command
+- **Config Pre-population**: The `setupConfig()` function pre-fills existing values when updating config, allowing users to press Enter to keep current values
+- **readline.write() Timing**: When pre-filling input values, `rl.write()` must be called BEFORE `rl.question()` to ensure values appear in prompt
 - **Default Workspace Resolution**: All commands that accept a `workspace` parameter will use the default workspace from config if no workspace is provided.
 
 ## Dependencies

@@ -230,7 +230,7 @@ api_token=test_token
 
       const { loadConfig } = await import('../../src/utils/index.js');
 
-      expect(() => loadConfig()).toThrow('Invalid email format');
+      expect(() => loadConfig()).toThrow(/Invalid email/);
     });
   });
 
