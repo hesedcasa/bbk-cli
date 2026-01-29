@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.3...bbk-cli-v1.2.0) (2026-01-29)
+
+
+### 🎉 Features
+
+* add interactive config setup command with pre-population ([#18](https://github.com/hesedcasa/bbk-cli/issues/18)) ([7e802ff](https://github.com/hesedcasa/bbk-cli/commit/7e802fffaee7b62fe2edadaa65e29ebc8e2b452a))
+
 ## [1.1.3](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.2...bbk-cli-v1.1.3) (2026-01-29)
 
 
