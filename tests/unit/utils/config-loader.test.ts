@@ -198,9 +198,12 @@ format=json
       expect(content).toContain('format=toon');
 
       // Check file permissions (0o600 = read/write for owner only)
-      const stats = fs.statSync(configPath);
-      const mode = stats.mode & 0o777;
-      expect(mode).toBe(0o600);
+      // Note: Windows doesn't support Unix-style permissions, so we skip the check
+      if (process.platform !== 'win32') {
+        const stats = fs.statSync(configPath);
+        const mode = stats.mode & 0o777;
+        expect(mode).toBe(0o600);
+      }
     });
 
     it('should create minimal config file with only required fields', async () => {
@@ -362,7 +365,7 @@ format=json
       expect(content).not.toContain('format=');
     });
 
-    it('should set secure file permissions (0o600)', async () => {
+    it.skipIf(process.platform === 'win32')('should set secure file permissions (0o600)', async () => {
       mockQuestion
         .mockImplementationOnce((_, callback) => callback('secure@example.com'))
         .mockImplementationOnce((_, callback) => callback('secure_token'))
