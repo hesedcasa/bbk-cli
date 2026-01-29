@@ -365,7 +365,7 @@ format=json
       expect(content).not.toContain('format=');
     });
 
-    it('should set secure file permissions (0o600)', async () => {
+    it.skipIf(process.platform === 'win32')('should set secure file permissions (0o600)', async () => {
       mockQuestion
         .mockImplementationOnce((_, callback) => callback('secure@example.com'))
         .mockImplementationOnce((_, callback) => callback('secure_token'))
@@ -375,17 +375,11 @@ format=json
       await setupConfig();
 
       const configPath = path.join(testConfigDir, '.bbkcli');
+      const stats = fs.statSync(configPath);
+      const mode = stats.mode & 0o777;
 
       // 0o600 = read/write for owner only (rw-------)
-      // Note: Windows doesn't support Unix-style permissions, so we skip the check
-      if (process.platform !== 'win32') {
-        const stats = fs.statSync(configPath);
-        const mode = stats.mode & 0o777;
-        expect(mode).toBe(0o600);
-      } else {
-        // On Windows, just verify the file was created
-        expect(fs.existsSync(configPath)).toBe(true);
-      }
+      expect(mode).toBe(0o600);
     });
   });
 });
