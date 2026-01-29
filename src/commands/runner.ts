@@ -13,6 +13,7 @@ import {
   listPullRequests,
   listRepositories,
   loadConfig,
+  setupConfig,
   testConnection,
 } from '../utils/index.js';
 
@@ -28,20 +29,25 @@ export const runCommand = async (
   _flag: string | null
 ): Promise<void> => {
   try {
-    // Load config to get default profile
-    const projectRoot = process.env.CLAUDE_PROJECT_ROOT || process.cwd();
-    const config = loadConfig(projectRoot);
+    // Handle config command first (before loading config)
+    if (command === 'config') {
+      await setupConfig();
+      clearClients();
+      process.exit(0);
+    }
+
+    // Load config
+    const config = loadConfig();
 
     // Parse arguments
     const args = arg && arg.trim() !== '' ? JSON.parse(arg) : {};
-    const profile = args.profile || config.defaultProfile;
     const format = args.format || config.defaultFormat;
 
     let result;
 
     switch (command) {
       case 'list-repositories':
-        result = await listRepositories(profile, args.workspace, format);
+        result = await listRepositories(args.workspace, format);
         break;
 
       case 'get-repository':
@@ -49,7 +55,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
-        result = await getRepository(profile, args.workspace, args.repoSlug, format);
+        result = await getRepository(args.workspace, args.repoSlug, format);
         break;
 
       case 'list-pullrequests':
@@ -57,7 +63,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
-        result = await listPullRequests(profile, args.workspace, args.repoSlug, args.state, format);
+        result = await listPullRequests(args.workspace, args.repoSlug, args.state, format);
         break;
 
       case 'get-pullrequest':
@@ -65,7 +71,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" and "pullRequestId" parameters are required');
           process.exit(1);
         }
-        result = await getPullRequest(profile, args.workspace, args.repoSlug, args.pullRequestId, format);
+        result = await getPullRequest(args.workspace, args.repoSlug, args.pullRequestId, format);
         break;
 
       case 'create-pullrequest':
@@ -74,7 +80,6 @@ export const runCommand = async (
           process.exit(1);
         }
         result = await createPullRequest(
-          profile,
           args.workspace,
           args.repoSlug,
           args.title,
@@ -90,7 +95,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
-        result = await listBranches(profile, args.workspace, args.repoSlug, args.q, args.sort, format);
+        result = await listBranches(args.workspace, args.repoSlug, args.q, args.sort, format);
         break;
 
       case 'list-commits':
@@ -98,7 +103,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
-        result = await listCommits(profile, args.workspace, args.repoSlug, args.branch, format);
+        result = await listCommits(args.workspace, args.repoSlug, args.branch, format);
         break;
 
       case 'list-issues':
@@ -106,7 +111,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
-        result = await listIssues(profile, args.workspace, args.repoSlug, format);
+        result = await listIssues(args.workspace, args.repoSlug, format);
         break;
 
       case 'get-issue':
@@ -114,7 +119,7 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" and "issueId" parameters are required');
           process.exit(1);
         }
-        result = await getIssue(profile, args.workspace, args.repoSlug, args.issueId, format);
+        result = await getIssue(args.workspace, args.repoSlug, args.issueId, format);
         break;
 
       case 'create-issue':
@@ -123,7 +128,6 @@ export const runCommand = async (
           process.exit(1);
         }
         result = await createIssue(
-          profile,
           args.workspace,
           args.repoSlug,
           args.title,
@@ -139,15 +143,15 @@ export const runCommand = async (
           console.error('ERROR: "repoSlug" parameter is required');
           process.exit(1);
         }
-        result = await listPipelines(profile, args.workspace, args.repoSlug, format);
+        result = await listPipelines(args.workspace, args.repoSlug, format);
         break;
 
       case 'get-user':
-        result = await getUser(profile, args.userId, format);
+        result = await getUser(args.userId, format);
         break;
 
       case 'test-connection':
-        result = await testConnection(profile);
+        result = await testConnection();
         break;
 
       default:

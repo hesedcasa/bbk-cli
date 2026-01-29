@@ -55,20 +55,20 @@ Bitbucket CLI
 
 Usage:
 
-npx bbk-cli                               start interactive CLI
-npx bbk-cli --commands                    list all available commands
-npx bbk-cli <command> -h                  quick help on <command>
-npx bbk-cli <command> <arg>               run command in headless mode
+bbk-cli                               start interactive CLI
+bbk-cli --commands                    list all available commands
+bbk-cli <command> -h                  quick help on <command>
+bbk-cli <command> <arg>               run command in headless mode
 
 All commands:
 
 ${COMMANDS.join(', ')}
 
 Examples:
-  npx bbk-cli list-repositories '{"workspace":"myworkspace"}'
-  npx bbk-cli get-repository '{"workspace":"myworkspace","repoSlug":"my-repo"}'
-  npx bbk-cli list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}'
-  npx bbk-cli test-connection
+  bbk-cli list-repositories '{"workspace":"myworkspace"}'
+  bbk-cli get-repository '{"workspace":"myworkspace","repoSlug":"my-repo"}'
+  bbk-cli list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}'
+  bbk-cli test-connection
 
 `);
 };

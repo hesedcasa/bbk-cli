@@ -27,7 +27,6 @@ import type { Config } from '../utils/index.js';
 export class wrapper {
   private rl: readline.Interface;
   private config: Config | null = null;
-  private currentProfile: string | null = null;
   private currentFormat: 'json' | 'toon' = 'json';
 
   constructor() {
@@ -43,18 +42,16 @@ export class wrapper {
    */
   async connect(): Promise<void> {
     try {
-      const projectRoot = process.env.CLAUDE_PROJECT_ROOT || process.cwd();
-      this.config = loadConfig(projectRoot);
-      this.currentProfile = this.config.defaultProfile;
+      this.config = loadConfig();
       this.currentFormat = this.config.defaultFormat;
 
       this.printHelp();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Failed to load configuration:', errorMessage);
-      console.error('\nMake sure:');
-      console.error('1. .claude/bitbucket-config.local.md exists');
-      console.error('2. The file contains valid Bitbucket profiles in YAML frontmatter');
+      console.error('\nTo fix this issue:');
+      console.error('  Run: bbk-cli config');
+      console.error('  This will start the interactive configuration setup.');
       process.exit(1);
     }
   }
@@ -95,19 +92,6 @@ export class wrapper {
       return;
     }
 
-    if (trimmed.startsWith('profile ')) {
-      const newProfile = trimmed.substring(8).trim();
-      if (this.config && this.config.profiles[newProfile]) {
-        this.currentProfile = newProfile;
-        console.log(`Switched to profile: ${newProfile}`);
-      } else {
-        const available = this.config ? Object.keys(this.config.profiles).join(', ') : 'none';
-        console.error(`ERROR: Profile "${newProfile}" not found. Available: ${available}`);
-      }
-      this.rl.prompt();
-      return;
-    }
-
     if (trimmed.startsWith('format ')) {
       const newFormat = trimmed.substring(7).trim() as 'json' | 'toon';
       if (['json', 'toon'].includes(newFormat)) {
@@ -115,18 +99,6 @@ export class wrapper {
         console.log(`Output format set to: ${newFormat}`);
       } else {
         console.error('ERROR: Invalid format. Choose: json or toon');
-      }
-      this.rl.prompt();
-      return;
-    }
-
-    if (trimmed === 'profiles') {
-      if (this.config) {
-        console.log('\nAvailable profiles:');
-        Object.keys(this.config.profiles).forEach((name, i) => {
-          const current = name === this.currentProfile ? ' (current)' : '';
-          console.log(`${i + 1}. ${name}${current}`);
-        });
       }
       this.rl.prompt();
       return;
@@ -152,7 +124,7 @@ export class wrapper {
    * @param arg - JSON string or null for the command arguments
    */
   private async runCommand(command: string, arg: string): Promise<void> {
-    if (!this.config || !this.currentProfile) {
+    if (!this.config) {
       console.log('Configuration not loaded!');
       this.rl.prompt();
       return;
@@ -161,14 +133,13 @@ export class wrapper {
     try {
       // Parse arguments
       const args = arg && arg.trim() !== '' ? JSON.parse(arg) : {};
-      const profile = args.profile || this.currentProfile;
       const format = args.format || this.currentFormat;
 
       let result;
 
       switch (command) {
         case 'list-repositories':
-          result = await listRepositories(profile, args.workspace, format);
+          result = await listRepositories(args.workspace, format);
           break;
 
         case 'get-repository':
@@ -177,7 +148,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await getRepository(profile, args.workspace, args.repoSlug, format);
+          result = await getRepository(args.workspace, args.repoSlug, format);
           break;
 
         case 'list-pullrequests':
@@ -186,7 +157,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await listPullRequests(profile, args.workspace, args.repoSlug, args.state, format);
+          result = await listPullRequests(args.workspace, args.repoSlug, args.state, format);
           break;
 
         case 'get-pullrequest':
@@ -195,7 +166,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await getPullRequest(profile, args.workspace, args.repoSlug, args.pullRequestId, format);
+          result = await getPullRequest(args.workspace, args.repoSlug, args.pullRequestId, format);
           break;
 
         case 'create-pullrequest':
@@ -207,7 +178,6 @@ export class wrapper {
             return;
           }
           result = await createPullRequest(
-            profile,
             args.workspace,
             args.repoSlug,
             args.title,
@@ -224,7 +194,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await listBranches(profile, args.workspace, args.repoSlug, args.q, args.sort, format);
+          result = await listBranches(args.workspace, args.repoSlug, args.q, args.sort, format);
           break;
 
         case 'list-commits':
@@ -233,7 +203,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await listCommits(profile, args.workspace, args.repoSlug, args.branch, format);
+          result = await listCommits(args.workspace, args.repoSlug, args.branch, format);
           break;
 
         case 'list-issues':
@@ -242,7 +212,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await listIssues(profile, args.workspace, args.repoSlug, format);
+          result = await listIssues(args.workspace, args.repoSlug, format);
           break;
 
         case 'get-issue':
@@ -251,7 +221,7 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await getIssue(profile, args.workspace, args.repoSlug, args.issueId, format);
+          result = await getIssue(args.workspace, args.repoSlug, args.issueId, format);
           break;
 
         case 'create-issue':
@@ -261,7 +231,6 @@ export class wrapper {
             return;
           }
           result = await createIssue(
-            profile,
             args.workspace,
             args.repoSlug,
             args.title,
@@ -278,15 +247,15 @@ export class wrapper {
             this.rl.prompt();
             return;
           }
-          result = await listPipelines(profile, args.workspace, args.repoSlug, format);
+          result = await listPipelines(args.workspace, args.repoSlug, format);
           break;
 
         case 'get-user':
-          result = await getUser(profile, args.userId, format);
+          result = await getUser(args.userId, format);
           break;
 
         case 'test-connection':
-          result = await testConnection(profile);
+          result = await testConnection();
           break;
 
         default:
@@ -314,7 +283,6 @@ export class wrapper {
    */
   private printHelp(): void {
     const version = getCurrentVersion();
-    const currentProfile = this.currentProfile || 'none';
     const currentFormat = this.currentFormat;
     const commandList = COMMANDS.join(', ');
 
@@ -322,7 +290,6 @@ export class wrapper {
 Bitbucket CLI v${version}
 
 Current Settings:
-  Profile: ${currentProfile}
   Format:  ${currentFormat}
 
 Usage:
@@ -330,8 +297,6 @@ Usage:
 commands              list all available Bitbucket commands
 <command> -h          quick help on <command>
 <command> <arg>       run <command> with JSON argument
-profile <name>        switch to a different Bitbucket profile
-profiles              list all available profiles
 format <type>         set output format (json, toon)
 clear                 clear the screen
 exit, quit, q         exit the CLI
@@ -341,11 +306,11 @@ All commands:
 ${commandList}
 
 Examples:
-  list-repositories {"workspace":"myworkspace"}
+  list-repositories
+  list-pullrequests {"repoSlug":"my-repo","state":"OPEN"}
   get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
-  list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
   get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
-  create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
+  create-pullrequest {"repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
   test-connection
 
 `);

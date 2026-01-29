@@ -46,142 +46,127 @@ export const COMMANDS_INFO: string[] = [
 export const COMMANDS_DETAIL: string[] = [
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-list-repositories '{"workspace":"myworkspace","profile":"cloud","format":"json"}'
-list-repositories '{"profile":"cloud","format":"json"}'  # Uses profile's defaultWorkspace`,
+list-repositories '{"workspace":"myworkspace","format":"json"}'
+list-repositories # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-get-repository '{"workspace":"myworkspace","repoSlug":"my-repo","profile":"cloud","format":"json"}'
-get-repository '{"repoSlug":"my-repo","profile":"cloud","format":"json"}'  # Uses profile's defaultWorkspace`,
+get-repository '{"workspace":"myworkspace","repoSlug":"my-repo","format":"json"}'
+get-repository '{"repoSlug":"my-repo","format":"json"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - state (optional): string - Pull request state (OPEN, MERGED, DECLINED, SUPERSEDED)
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN","profile":"cloud","format":"json"}'
-list-pullrequests '{"repoSlug":"my-repo","state":"OPEN","profile":"cloud","format":"json"}'  # Uses profile's defaultWorkspace`,
+list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN","format":"json"}'
+list-pullrequests '{"repoSlug":"my-repo","state":"OPEN","format":"json"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - pullRequestId (required): number - Pull request ID
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-get-pullrequest '{"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123,"profile":"cloud","format":"json"}'
-get-pullrequest '{"repoSlug":"my-repo","pullRequestId":123,"profile":"cloud","format":"json"}'  # Uses profile's defaultWorkspace`,
+get-pullrequest '{"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123,"format":"json"}'
+get-pullrequest '{"repoSlug":"my-repo","pullRequestId":123,"format":"json"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - title (required): string - Pull request title
 - sourceBranch (required): string - Source branch name
 - destinationBranch (required): string - Destination branch name (default: main or master)
 - description (optional): string - Pull request description
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-create-pullrequest '{"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","profile":"cloud","format":"json"}'
-create-pullrequest '{"repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+create-pullrequest '{"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","format":"json"}'
+create-pullrequest '{"repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}'  # Uses default workspace`,
   String.raw`
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - q (optional): string - Query string to filter branches using comparison operators (=, !=, ~, !~, >, >=, <, <=, IN, NOT IN). Example: 'name~"feature"' for case-insensitive contains, or 'name="main"' for exact match
 - sort (optional): string - Field to sort by. Prefix with '-' for descending order (e.g., '-target.date'). Only one sort field is supported per request
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-list-branches '{"workspace":"myworkspace","repoSlug":"my-repo","q":"name~\"feature\"","sort":"-target.date","profile":"cloud","format":"json"}'
-list-branches '{"repoSlug":"my-repo","profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+list-branches '{"workspace":"myworkspace","repoSlug":"my-repo","q":"name~\"feature\"","sort":"-target.date","format":"json"}'
+list-branches '{"repoSlug":"my-repo"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - branch (optional): string - Branch name to filter commits
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-list-commits '{"workspace":"myworkspace","repoSlug":"my-repo","branch":"main","profile":"cloud","format":"json"}'
-list-commits '{"repoSlug":"my-repo","branch":"main","profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+list-commits '{"workspace":"myworkspace","repoSlug":"my-repo","branch":"main","format":"json"}'
+list-commits '{"repoSlug":"my-repo","branch":"main","format":"json"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-list-issues '{"workspace":"myworkspace","repoSlug":"my-repo","profile":"cloud","format":"json"}'
-list-issues '{"repoSlug":"my-repo","profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+list-issues '{"workspace":"myworkspace","repoSlug":"my-repo","format":"json"}'
+list-issues '{"repoSlug":"my-repo","format":"json"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - issueId (required): number - Issue ID
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-get-issue '{"workspace":"myworkspace","repoSlug":"my-repo","issueId":123,"profile":"cloud","format":"json"}'
-get-issue '{"repoSlug":"my-repo","issueId":123,"profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+get-issue '{"workspace":"myworkspace","repoSlug":"my-repo","issueId":123,"format":"json"}'
+get-issue '{"repoSlug":"my-repo","issueId":123,"format":"json"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
 - title (required): string - Issue title
 - content (optional): string - Issue content/description
 - kind (optional): string - Issue type (bug, enhancement, proposal, task)
 - priority (optional): string - Issue priority (trivial, minor, major, critical, blocker)
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","content":"Description here","kind":"bug","profile":"cloud","format":"json"}'
-create-issue '{"repoSlug":"my-repo","title":"Bug found","kind":"bug","profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","content":"Description here","kind":"bug","format":"json"}'
+create-issue '{"repoSlug":"my-repo","title":"Bug found","kind":"bug"}'  # Uses default workspace`,
   `
 Parameters:
-- workspace (optional): string - Workspace ID or slug (uses profile's defaultWorkspace if not provided)
+- workspace (optional): string - Workspace ID or slug (uses default workspace if not provided)
 - repoSlug (required): string - Repository slug
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-list-pipelines '{"workspace":"myworkspace","repoSlug":"my-repo","profile":"cloud","format":"json"}'
-list-pipelines '{"repoSlug":"my-repo","profile":"cloud"}'  # Uses profile's defaultWorkspace`,
+list-pipelines '{"workspace":"myworkspace","repoSlug":"my-repo","format":"json"}'
+list-pipelines '{"repoSlug":"my-repo","format":"json"}'  # Uses default workspace`,
   `
 Parameters:
 - userId (optional): string - User UUID or account_id to look up. If not provided, returns current authenticated user.
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
 - format (optional): string - Output format: json or toon (default: json)
 
 Example:
-get-user '{"profile":"cloud"}'  # Get current authenticated user
-get-user '{"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15
-
-","profile":"cloud"}'  # Get specific user by UUID`,
+get-user  # Get current authenticated user
+get-user '{"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15"}'  # Get specific user by UUID`,
   `
-Parameters:
-- profile (optional): string - Bitbucket profile name (default: configured default profile)
+Parameters: None
 
 Example:
-test-connection '{"profile":"cloud"}'`,
+test-connection`,
 ];

@@ -319,8 +319,8 @@ describe('arg-parser', () => {
       }
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Bitbucket CLI'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli --commands'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('bbk-cli'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('bbk-cli --commands'));
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repos'));
 
       exitSpy.mockRestore();
@@ -340,8 +340,8 @@ describe('arg-parser', () => {
       }
 
       expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Examples:'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli list-repos'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('npx bbk-cli get-repo'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('bbk-cli list-repositories'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('bbk-cli get-repository'));
 
       exitSpy.mockRestore();
       consoleLogSpy.mockRestore();

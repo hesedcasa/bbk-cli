@@ -1,14 +1,82 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import yaml from 'yaml';
+import readline from 'readline';
 
 /**
- * Bitbucket connection profile configuration
+ * Main configuration structure
  */
-interface BitbucketProfile {
+export interface Config {
   email: string;
-  apiToken: string; // Bitbucket App Password for Basic authentication
-  defaultWorkspace?: string; // Default workspace for this profile
+  apiToken: string;
+  defaultWorkspace?: string;
+  defaultFormat: 'json' | 'toon';
+}
+
+/**
+ * Parse INI-style config file content
+ */
+function parseIniConfig(content: string): Partial<Config> {
+  const config: Partial<Config> = {};
+  const lines = content.split('\n');
+  let currentSection: string | null = null;
+  const warnings: string[] = [];
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    // Skip empty lines and comments
+    if (!trimmedLine || trimmedLine.startsWith('#')) {
+      continue;
+    }
+
+    // Section header
+    const sectionMatch = trimmedLine.match(/^\[([^\]]+)\]$/);
+    if (sectionMatch) {
+      currentSection = sectionMatch[1];
+      if (!['auth', 'defaults'].includes(currentSection)) {
+        warnings.push(`Unknown section: [${currentSection}]`);
+      }
+      continue;
+    }
+
+    // Key-value pair
+    const keyValueMatch = trimmedLine.match(/^([^=]+)=(.*)$/);
+    if (keyValueMatch && currentSection) {
+      const key = keyValueMatch[1].trim();
+      const value = keyValueMatch[2].trim();
+
+      if (currentSection === 'auth') {
+        if (key === 'email') {
+          config.email = value;
+        } else if (key === 'api_token') {
+          config.apiToken = value;
+        } else {
+          warnings.push(`Unknown key in [auth]: ${key}`);
+        }
+      } else if (currentSection === 'defaults') {
+        if (key === 'workspace' && value) {
+          config.defaultWorkspace = value;
+        } else if (key === 'format') {
+          if (value === 'json' || value === 'toon') {
+            config.defaultFormat = value;
+          } else {
+            warnings.push(`Invalid format value: "${value}". Must be 'json' or 'toon'.`);
+          }
+        } else if (key) {
+          warnings.push(`Unknown key in [defaults]: ${key}`);
+        }
+      }
+    }
+  }
+
+  // Log warnings if any
+  if (warnings.length > 0) {
+    console.warn('Configuration warnings:');
+    warnings.forEach(w => console.warn(`  - ${w}`));
+  }
+
+  return config;
 }
 
 /**
@@ -20,101 +88,218 @@ function isValidEmail(email: string): boolean {
 }
 
 /**
- * Main configuration structure
+ * Prompt for email with validation
  */
-export interface Config {
-  profiles: Record<string, BitbucketProfile>;
-  defaultProfile: string;
-  defaultFormat: 'json' | 'toon';
+async function promptEmail(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve, reject) => {
+    const ask = () => {
+      rl.question('email: ', email => {
+        email = email.trim();
+        if (!email) {
+          console.log('Email is required.');
+          ask();
+          return;
+        }
+        if (!isValidEmail(email)) {
+          console.log('Invalid email format. Please try again.');
+          ask();
+          return;
+        }
+        rl.close();
+        resolve(email);
+      });
+    };
+
+    rl.on('error', error => {
+      reject(new Error(`Failed to read input: ${error.message}`));
+    });
+
+    ask();
+  });
 }
 
 /**
- * Bitbucket client options for basic auth
+ * Prompt for api_token with hidden input
  */
-interface BitbucketClientOptions {
-  auth: {
-    email: string;
-    apiToken: string; // Bitbucket App Password for Basic authentication
-  };
+async function promptApiToken(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve, reject) => {
+    const ask = () => {
+      rl.question('api_token: ', apiToken => {
+        apiToken = apiToken.trim();
+        if (!apiToken) {
+          console.log('API token is required.');
+          ask();
+          return;
+        }
+        rl.close();
+        resolve(apiToken);
+      });
+    };
+
+    rl.on('error', error => {
+      reject(new Error(`Failed to read input: ${error.message}`));
+    });
+
+    ask();
+  });
 }
 
 /**
- * Load Bitbucket connection profiles from .claude/bitbucket-config.local.md
+ * Prompt for optional default workspace
+ */
+async function promptWorkspace(): Promise<string | undefined> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve, reject) => {
+    rl.question('workspace: ', workspace => {
+      workspace = workspace.trim();
+      rl.close();
+      resolve(workspace || undefined);
+    });
+
+    rl.on('error', error => {
+      reject(new Error(`Failed to read input: ${error.message}`));
+    });
+  });
+}
+
+/**
+ * Prompt for format preference (json/toon)
+ */
+async function promptFormat(): Promise<'json' | 'toon'> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve, reject) => {
+    const ask = () => {
+      rl.question('format: ', format => {
+        format = format.trim().toLowerCase();
+        if (!format) {
+          rl.close();
+          resolve('json');
+          return;
+        }
+        if (format === 'json' || format === 'toon') {
+          rl.close();
+          resolve(format as 'json' | 'toon');
+          return;
+        }
+        console.log('Invalid format. Please choose json or toon.');
+        ask();
+      });
+    };
+
+    rl.on('error', error => {
+      reject(new Error(`Failed to read input: ${error.message}`));
+    });
+
+    ask();
+  });
+}
+
+/**
+ * Interactive config setup using readline
+ * Prompts user for email and api_token, then writes config file
+ */
+export async function setupConfig(): Promise<void> {
+  const configPath = path.join(os.homedir(), '.bbkcli');
+
+  // Collect credentials
+  const email = await promptEmail();
+  const apiToken = await promptApiToken();
+
+  // Optional fields
+  const defaultWorkspace = await promptWorkspace();
+  const format = await promptFormat();
+
+  // Write config file
+  let configContent = `[auth]
+email=${email}
+api_token=${apiToken}
+`;
+
+  if (defaultWorkspace || format !== 'json') {
+    configContent += `\n[defaults]\n`;
+    if (defaultWorkspace) {
+      configContent += `workspace=${defaultWorkspace}\n`;
+    }
+    if (format !== 'json') {
+      configContent += `format=${format}\n`;
+    }
+  }
+
+  try {
+    fs.writeFileSync(configPath, configContent, { mode: 0o600 }); // Read/write for owner only
+    console.log(`\n✓ Configuration saved to ${configPath}`);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to write config file: ${errorMessage}\n\nMake sure you have permission to write to ${configPath}`
+    );
+  }
+}
+
+/**
+ * Load Bitbucket connection configuration from ~/.bbkcli
  *
- * @param projectRoot - Project root directory
- * @returns Configuration object with profiles and settings
+ * @returns Configuration object with auth settings and defaults
+ * @throws Error if config file doesn't exist or is invalid
  */
-export function loadConfig(projectRoot: string): Config {
-  const configPath = path.join(projectRoot, '.claude', 'bitbucket-config.local.md');
+export function loadConfig(): Config {
+  const configPath = path.join(os.homedir(), '.bbkcli');
 
   if (!fs.existsSync(configPath)) {
     throw new Error(
-      `Configuration file not found at ${configPath}\n` +
-        `Please create .claude/bitbucket-config.local.md with your Bitbucket profiles.`
+      `Configuration file not found at ${configPath}\n\nTo fix this issue:\n  Run: bbk-cli config\n  This will start the interactive configuration setup.`
     );
   }
 
-  const content = fs.readFileSync(configPath, 'utf-8');
-
-  // Extract YAML frontmatter
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
-  const frontmatterMatch = frontmatterRegex.exec(content);
-
-  if (!frontmatterMatch) {
-    throw new Error(`Invalid configuration file format. Expected YAML frontmatter (---...---) at the beginning.`);
+  let content: string;
+  try {
+    content = fs.readFileSync(configPath, 'utf-8');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to read configuration file at ${configPath}: ${errorMessage}\n\nCheck file permissions and try again.`
+    );
   }
 
-  const frontmatter = frontmatterMatch[1];
-  const config = yaml.parse(frontmatter) as Partial<Config>;
+  const config = parseIniConfig(content);
 
-  // Validate configuration
-  if (!config.profiles || typeof config.profiles !== 'object') {
-    throw new Error('Configuration must include "profiles" object');
+  // Validate required fields (should be valid after setup, but double-check)
+  if (!config.email || !config.apiToken) {
+    throw new Error(
+      `Configuration must include both "email" and "api_token" in the [auth] section\n\n` +
+        `Current configuration file: ${configPath}`
+    );
   }
 
-  // Validate each profile
-  for (const [profileName, profile] of Object.entries(config.profiles)) {
-    // Email and apiToken are required
-    if (!profile.email || !profile.apiToken) {
-      throw new Error(`Profile "${profileName}" must have both "email" and "apiToken"`);
-    }
-
-    // Validate email format
-    if (!isValidEmail(profile.email)) {
-      throw new Error(`Profile "${profileName}" has invalid email format: "${profile.email}"`);
-    }
+  // Validate email format
+  if (!isValidEmail(config.email)) {
+    throw new Error(
+      `Invalid email format: "${config.email}"\n\n` + `Please check your configuration file at: ${configPath}`
+    );
   }
 
   return {
-    profiles: config.profiles,
-    defaultProfile: config.defaultProfile || Object.keys(config.profiles)[0],
+    email: config.email,
+    apiToken: config.apiToken,
+    defaultWorkspace: config.defaultWorkspace,
     defaultFormat: config.defaultFormat || 'json',
-  };
-}
-
-/**
- * Get Bitbucket client options for a specific profile
- *
- * @param config - Configuration object
- * @param profileName - Profile name
- * @returns Bitbucket client options object with basic auth
- */
-export function getBitbucketClientOptions(config: Config, profileName: string): BitbucketClientOptions {
-  const profile = config.profiles[profileName];
-
-  if (!profile) {
-    const availableProfiles = Object.keys(config.profiles).join(', ');
-    throw new Error(`Profile "${profileName}" not found. Available profiles: ${availableProfiles}`);
-  }
-
-  if (!profile.email || !profile.apiToken) {
-    throw new Error(`Profile "${profileName}" must have both "email" and "apiToken"`);
-  }
-
-  return {
-    auth: {
-      email: profile.email,
-      apiToken: profile.apiToken,
-    },
   };
 }
