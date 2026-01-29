@@ -1,46 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getCurrentVersion, printAvailableCommands, printCommandDetail } from '../../../src/commands/helpers.js';
-
-// Mock the config module
-vi.mock('../../../src/config/index.js', () => ({
-  COMMANDS: [
-    'list-repos',
-    'get-repo',
-    'list-prs',
-    'get-pr',
-    'create-pr',
-    'update-pr',
-    'add-comment',
-    'delete-pr',
-    'get-user',
-    'test-connection',
-  ],
-  COMMANDS_INFO: [
-    'List all accessible repositories',
-    'Get details of a specific repository',
-    'List pull requests in a repository',
-    'Get details of a specific pull request',
-    'Create a new pull request',
-    'Update an existing pull request',
-    'Add a comment to a pull request',
-    'Delete a pull request',
-    'Get user information',
-    'Test Bitbucket API connection',
-  ],
-  COMMANDS_DETAIL: [
-    '\nParameters:\n- workspace (optional): string\n- format (optional): string\n\nExample:\nlist-repos',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n\nExample:\nget-repo',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- state (optional): string\n- limit (optional): number\n\nExample:\nlist-prs',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n\nExample:\nget-pr',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- title (required): string\n- sourceBranch (required): string\n- destinationBranch (required): string\n\nExample:\ncreate-pr',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n- title (optional): string\n- description (optional): string\n\nExample:\nupdate-pr',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n- content (required): string\n\nExample:\nadd-comment',
-    '\nParameters:\n- workspace (required): string\n- repo (required): string\n- prId (required): string\n\nExample:\ndelete-pr',
-    '\nParameters:\n- accountId (optional): string\n- username (optional): string\n\nExample:\nget-user',
-    '\nParameters:\n- profile (optional): string\n\nExample:\ntest-connection',
-  ],
-}));
+import { COMMANDS, COMMANDS_INFO } from '../../../src/config/constants.js';
 
 describe('commands/helpers', () => {
   beforeEach(() => {
@@ -48,113 +9,58 @@ describe('commands/helpers', () => {
   });
 
   describe('printAvailableCommands', () => {
-    it('should print all available commands with their descriptions', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      printAvailableCommands();
-
-      expect(consoleLogSpy).toHaveBeenCalledWith('\nAvailable commands:');
-      expect(consoleLogSpy).toHaveBeenCalledWith('1. list-repos: List all accessible repositories');
-      expect(consoleLogSpy).toHaveBeenCalledWith('2. get-repo: Get details of a specific repository');
-      expect(consoleLogSpy).toHaveBeenCalledWith('3. list-prs: List pull requests in a repository');
-      expect(consoleLogSpy).toHaveBeenCalledWith('4. get-pr: Get details of a specific pull request');
-      expect(consoleLogSpy).toHaveBeenCalledWith('5. create-pr: Create a new pull request');
-      expect(consoleLogSpy).toHaveBeenCalledWith('6. update-pr: Update an existing pull request');
-      expect(consoleLogSpy).toHaveBeenCalledWith('7. add-comment: Add a comment to a pull request');
-      expect(consoleLogSpy).toHaveBeenCalledWith('8. delete-pr: Delete a pull request');
-      expect(consoleLogSpy).toHaveBeenCalledWith('9. get-user: Get user information');
-      expect(consoleLogSpy).toHaveBeenCalledWith('10. test-connection: Test Bitbucket API connection');
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it('should print commands with correct numbering starting from 1', () => {
+    it('should print commands in correct format with numbering', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       printAvailableCommands();
 
       const calls = consoleLogSpy.mock.calls;
-      // Find the calls that contain command numbers
+      const commandCalls = calls.filter(call => call[0] && call[0].match(/^\d+\./));
+
+      expect(commandCalls).toHaveLength(COMMANDS.length);
+      commandCalls.forEach((call, index) => {
+        expect(call[0]).toMatch(/^\d+\.\s[\w-]+:\s.+/);
+        expect(call[0]).toContain(`${index + 1}.`);
+        expect(call[0]).toContain(COMMANDS[index]);
+        expect(call[0]).toContain(COMMANDS_INFO[index]);
+      });
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should print all command names in output', () => {
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      printAvailableCommands();
+
+      const output = consoleLogSpy.mock.calls.map(call => call[0]).join(' ');
+      COMMANDS.forEach(command => {
+        expect(output).toContain(command);
+      });
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it('should start numbering from 1 and end at command count', () => {
+      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      printAvailableCommands();
+
+      const calls = consoleLogSpy.mock.calls;
       const numberCalls = calls.filter(call => call[0] && call[0].match(/^\d+\./));
-      expect(numberCalls).toHaveLength(10);
-      expect(numberCalls[0][0]).toBe('1. list-repos: List all accessible repositories');
-      expect(numberCalls[9][0]).toBe('10. test-connection: Test Bitbucket API connection');
+
+      expect(numberCalls[0][0]).toMatch(/^1\.\s/);
+      expect(numberCalls[numberCalls.length - 1][0]).toMatch(new RegExp(`^${COMMANDS.length}\\.\\s`));
 
       consoleLogSpy.mockRestore();
     });
   });
 
   describe('printCommandDetail', () => {
-    it('should print detailed information for a valid command', () => {
+    it('should print details for all commands', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('list-repos');
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repos'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('List all accessible repositories'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Parameters:'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (optional)'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Example:'));
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it('should print details for get-repo command', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      printCommandDetail('get-repo');
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('get-repo'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Get details of a specific repository'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (required)'));
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it('should print details for create-pr command', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      printCommandDetail('create-pr');
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('create-pr'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Create a new pull request'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (required)'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('title (required)'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('sourceBranch (required)'));
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it('should print details for update-pr command', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      printCommandDetail('update-pr');
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('update-pr'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Update an existing pull request'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('workspace (required)'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('prId (required)'));
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it('should print details for all 10 commands', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      const commands = [
-        'list-repos',
-        'get-repo',
-        'list-prs',
-        'get-pr',
-        'create-pr',
-        'update-pr',
-        'add-comment',
-        'delete-pr',
-        'get-user',
-        'test-connection',
-      ];
-
-      commands.forEach(command => {
+      COMMANDS.forEach(command => {
         consoleLogSpy.mockClear();
         printCommandDetail(command);
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining(command));
@@ -234,9 +140,9 @@ describe('commands/helpers', () => {
     it('should trim whitespace from command name', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('  list-repos  ');
+      printCommandDetail('  list-repositories  ');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repos'));
+      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('list-repositories'));
       expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('Unknown command'));
 
       consoleLogSpy.mockRestore();
@@ -245,9 +151,9 @@ describe('commands/helpers', () => {
     it('should handle commands with mixed case', () => {
       const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      printCommandDetail('LIST-REPOS');
+      printCommandDetail('LIST-REPOSITORIES');
 
-      expect(consoleLogSpy).toHaveBeenCalledWith('Unknown command: LIST-REPOS');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Unknown command: LIST-REPOSITORIES');
       expect(consoleLogSpy).toHaveBeenCalledWith('\nAvailable commands:');
 
       consoleLogSpy.mockRestore();
