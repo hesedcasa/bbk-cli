@@ -1,6 +1,6 @@
 import fs from 'fs';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the Bitbucket API functions - must be at top level but without external references
@@ -37,7 +37,7 @@ describe('CLI Integration', () => {
 
   beforeEach(() => {
     testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-integration-'));
-    
+
     // Spy on os.homedir() to return test directory (works on all platforms)
     homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
 
@@ -49,7 +49,7 @@ email=test@test.com
 api_token=test_token_123
 
 [defaults]
-workplace=testworkspace
+workspace=testworkspace
 format=json
 `;
     fs.writeFileSync(configPath, configContent);
@@ -60,7 +60,7 @@ format=json
 
   afterEach(() => {
     fs.rmSync(testConfigDir, { recursive: true, force: true });
-    
+
     // Restore original os.homedir()
     homedirSpy.mockRestore();
   });

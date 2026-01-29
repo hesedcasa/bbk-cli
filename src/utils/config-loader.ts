@@ -63,10 +63,6 @@ function parseIniConfig(content: string): Partial<Config> {
           } else {
             warnings.push(`Invalid format value: "${value}". Must be 'json' or 'toon'.`);
           }
-        } else if (key === 'workplace' && value) {
-          // Backward compatibility: accept old "workplace" key
-          config.defaultWorkspace = value;
-          warnings.push(`Key "workplace" is deprecated. Use "workspace" instead.`);
         } else if (key) {
           warnings.push(`Unknown key in [defaults]: ${key}`);
         }

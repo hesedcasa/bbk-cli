@@ -11,8 +11,6 @@
     "build": "tsc",
     "start": "tsx src/index.ts",
     "dev": "tsx src/index.ts",
-    "conductor": "tsx src/conductor-cli.ts",
-    "conductor:dev": "tsx src/conductor-cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

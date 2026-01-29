@@ -8,7 +8,7 @@ A powerful command-line interface for Bitbucket interaction with support for rep
 
 - 💻 **Interactive REPL** for Bitbucket exploration and management
 - 🚀 **Headless mode** for one-off command execution and automation
-- 🏢 **Default workspace support** - omit workspace parameter when configured
+- 🏢 **Default workspace support** - set once in config, omit from commands
 - 📊 **Multiple output formats**: JSON or TOON
 - 📦 **Repository management**: list and view repository details
 - 🔀 **Pull request operations**: list, view, and create pull requests with auto-reviewers
@@ -58,11 +58,13 @@ format=json
 
 - **[auth] section** - Required authentication credentials
   - `email`: Your Bitbucket email
-  - `api_token`: Your Bitbucket API token (App Password)
+  - `api_token`: Your Bitbucket API token
 
 - **[defaults] section** - Optional default settings
-  - `workspace`: Default workspace to use if not specified in commands
+  - `workspace`: Default workspace to use if not specified in commands (recommended)
   - `format`: Default output format (`json` or `toon`)
+
+**Tip:** Setting a default workspace in your config file allows you to omit the workspace parameter from all commands, making them much more concise. You can still specify a workspace parameter in any command if you need to work with a different workspace.
 
 ## Quick Start
 
@@ -76,59 +78,74 @@ bbk-cli
 
 Once started, you'll see the `bbk>` prompt:
 
+**Tip:** Set a default workspace in your config file (see Configuration section) to omit the workspace parameter from all commands.
+
 ```
-bbk> list-repositories {"workspace":"myworkspace"}
-bbk> list-repositories {}              # Uses default workspace from config
-bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
-bbk> get-repository {"repoSlug":"my-repo"}  # Uses default workspace from config
-bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
-bbk> list-pullrequests {"repoSlug":"my-repo","state":"OPEN"}  # Uses default workspace
+bbk> list-repositories
+bbk> get-repository {"repoSlug":"my-repo"}
+bbk> list-pullrequests {"repoSlug":"my-repo","state":"OPEN"}
+```
+
+**Note:** You can optionally specify a workspace parameter if you need to work with a different workspace:
+
+```
+bbk> list-repositories {"workspace":"other-workspace"}
 ```
 
 ### Headless Mode
 
 Execute single commands directly:
 
+**Tip:** Set a default workspace in your config file to omit the workspace parameter from commands.
+
 ```bash
 # Test connection
 bbk-cli test-connection
 
 # List all repositories
-bbk-cli list-repositories '{"workspace":"myworkspace"}'
+bbk-cli list-repositories
 
 # Get repository details
-bbk-cli get-repository '{"workspace":"myworkspace","repoSlug":"my-repo"}'
+bbk-cli get-repository '{"repoSlug":"my-repo"}'
 
 # List pull requests
-bbk-cli list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}'
+bbk-cli list-pullrequests '{"repoSlug":"my-repo","state":"OPEN"}'
 
 # Get pull request details
-bbk-cli get-pullrequest '{"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}'
+bbk-cli get-pullrequest '{"repoSlug":"my-repo","pullRequestId":123}'
 
 # Create a new pull request
-bbk-cli create-pullrequest '{"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}'
+bbk-cli create-pullrequest '{"repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}'
 
 # List issues
-bbk-cli list-issues '{"workspace":"myworkspace","repoSlug":"my-repo"}'
+bbk-cli list-issues '{"repoSlug":"my-repo"}'
 
 # Create an issue
-bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","kind":"bug"}'
+bbk-cli create-issue '{"repoSlug":"my-repo","title":"Bug found","kind":"bug"}'
+```
+
+**Note:** You can optionally specify a workspace parameter if working with multiple workspaces:
+
+```bash
+bbk-cli list-repositories '{"workspace":"other-workspace"}'
 ```
 
 ## Available Commands
+
+**Note:** All commands support an optional `workspace` parameter if you need to work with a different workspace than your default.
 
 ### Repository Commands
 
 - **list-repositories** - List all repositories in a workspace
 
   ```bash
-  bbk> list-repositories {"workspace":"myworkspace"}
-  bbk> list-repositories {"workspace":"myworkspace","format":"json"}
+  bbk> list-repositories
+  bbk> list-repositories {"format":"json"}
   ```
 
 - **get-repository** - Get details of a specific repository
   ```bash
-  bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> get-repository {"repoSlug":"my-repo"}
   ```
 
 ### Pull Request Commands
@@ -136,21 +153,21 @@ bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"B
 - **list-pullrequests** - List pull requests in a repository
 
   ```bash
-  bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
-  bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
+  bbk> list-pullrequests {"repoSlug":"my-repo"}
+  bbk> list-pullrequests {"repoSlug":"my-repo","state":"OPEN"}
   ```
 
 - **get-pullrequest** - Get details of a specific pull request
 
   ```bash
-  bbk> get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
+  bbk> get-pullrequest {"repoSlug":"my-repo","pullRequestId":123}
   ```
 
 - **create-pullrequest** - Create a new pull request
 
   ```bash
-  bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
-  bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","description":"PR description"}
+  bbk> create-pullrequest {"repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
+  bbk> create-pullrequest {"repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main","description":"PR description"}
   ```
 
   **Note**: This command automatically adds the repository's default reviewers (excluding the PR author) to the pull request.
@@ -160,7 +177,7 @@ bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"B
 - **list-branches** - List branches in a repository
 
   ```bash
-  bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-branches {"repoSlug":"my-repo"}
   ```
 
 ### Commit Commands
@@ -168,8 +185,8 @@ bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"B
 - **list-commits** - List commits in a repository
 
   ```bash
-  bbk> list-commits {"workspace":"myworkspace","repoSlug":"my-repo"}
-  bbk> list-commits {"workspace":"myworkspace","repoSlug":"my-repo","branch":"main"}
+  bbk> list-commits {"repoSlug":"my-repo"}
+  bbk> list-commits {"repoSlug":"my-repo","branch":"main"}
   ```
 
 ### Issue Commands
@@ -177,20 +194,20 @@ bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"B
 - **list-issues** - List issues in a repository
 
   ```bash
-  bbk> list-issues {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-issues {"repoSlug":"my-repo"}
   ```
 
 - **get-issue** - Get details of a specific issue
 
   ```bash
-  bbk> get-issue {"workspace":"myworkspace","repoSlug":"my-repo","issueId":123}
+  bbk> get-issue {"repoSlug":"my-repo","issueId":123}
   ```
 
 - **create-issue** - Create a new issue
 
   ```bash
-  bbk> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found"}
-  bbk> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","content":"Description here","kind":"bug","priority":"major"}
+  bbk> create-issue {"repoSlug":"my-repo","title":"Bug found"}
+  bbk> create-issue {"repoSlug":"my-repo","title":"Bug found","content":"Description here","kind":"bug","priority":"major"}
   ```
 
 ### Pipeline Commands
@@ -198,14 +215,14 @@ bbk-cli create-issue '{"workspace":"myworkspace","repoSlug":"my-repo","title":"B
 - **list-pipelines** - List pipelines in a repository
 
   ```bash
-  bbk> list-pipelines {"workspace":"myworkspace","repoSlug":"my-repo"}
+  bbk> list-pipelines {"repoSlug":"my-repo"}
   ```
 
 ### User Commands
 
 - **get-user** - Get user information
   ```bash
-  bbk> get-user {}                         # Get current authenticated user
+  bbk> get-user  # Get current authenticated user
   bbk> get-user {"userId":"04b587de-b844-4c54-b4ec-1e33157fcc15"}  # Get specific user by UUID
   ```
 
@@ -234,7 +251,11 @@ Machine-readable JSON format (default):
 
 ```bash
 bbk> format json
-bbk> list-repositories {"workspace":"myworkspace"}
+bbk> list-repositories
+```
+
+```bash
+bbk-cli list-repositories '{"format":"json"}'
 ```
 
 ### TOON Format
@@ -243,7 +264,11 @@ bbk> list-repositories {"workspace":"myworkspace"}
 
 ```bash
 bbk> format toon
-bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
+bbk> list-pullrequests {"repoSlug":"my-repo"}
+```
+
+```bash
+bbk-cli list-repositories '{"format":"toon"}'
 ```
 
 ## Security
@@ -251,7 +276,7 @@ bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo"}
 ⚠️ **Important Security Notes:**
 
 1. **Never commit** `~/.bbkcli` to version control
-2. The config file is created with secure permissions (0600 - read/write for owner only)
+2. The config file is created with secure permissions
 3. Keep your API tokens secure and rotate them periodically
 4. API tokens have the same permissions as your user account
 
@@ -288,42 +313,6 @@ npm run test:coverage       # Run tests with coverage
 npm run format              # Format code with ESLint and Prettier
 npm run find-deadcode       # Find unused exports
 npm run pre-commit          # Run format + find-deadcode
-```
-
-## Examples
-
-### Basic Workflow
-
-```bash
-# Start interactive mode
-bbk-cli
-
-# List all repositories in workspace
-bbk> list-repositories {"workspace":"myworkspace"}
-
-# Get specific repository
-bbk> get-repository {"workspace":"myworkspace","repoSlug":"my-repo"}
-
-# List pull requests
-bbk> list-pullrequests {"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}
-
-# Get specific pull request
-bbk> get-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","pullRequestId":123}
-
-# Create new pull request
-bbk> create-pullrequest {"workspace":"myworkspace","repoSlug":"my-repo","title":"Feature PR","sourceBranch":"feature/new","destinationBranch":"main"}
-
-# List branches
-bbk> list-branches {"workspace":"myworkspace","repoSlug":"my-repo"}
-
-# List commits
-bbk> list-commits {"workspace":"myworkspace","repoSlug":"my-repo","branch":"main"}
-
-# List issues
-bbk> list-issues {"workspace":"myworkspace","repoSlug":"my-repo"}
-
-# Create issue
-bbk> create-issue {"workspace":"myworkspace","repoSlug":"my-repo","title":"Bug found","kind":"bug"}
 ```
 
 ## Troubleshooting

@@ -31,7 +31,7 @@ describe('config-loader', () => {
     beforeEach(() => {
       // Create a temporary directory for test configs
       testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-test-'));
-      
+
       // Spy on os.homedir() to return test directory (works on all platforms)
       homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
     });
@@ -41,10 +41,10 @@ describe('config-loader', () => {
       if (testConfigDir) {
         fs.rmSync(testConfigDir, { recursive: true, force: true });
       }
-      
+
       // Restore original os.homedir()
       homedirSpy.mockRestore();
-      
+
       // Clear mock calls
       vi.clearAllMocks();
     });
@@ -160,7 +160,7 @@ format=json
 
     beforeEach(() => {
       testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bbk-cli-test-'));
-      
+
       // Spy on os.homedir() to return test directory (works on all platforms)
       homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue(testConfigDir);
     });
@@ -169,10 +169,10 @@ format=json
       if (testConfigDir) {
         fs.rmSync(testConfigDir, { recursive: true, force: true });
       }
-      
+
       // Restore original os.homedir()
       homedirSpy.mockRestore();
-      
+
       vi.clearAllMocks();
     });
 
