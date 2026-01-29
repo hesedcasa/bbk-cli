@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.2...bbk-cli-v1.1.3) (2026-01-29)
+
+
+### ♻️ Chores
+
+* migrate config system from YAML to INI format ([#12](https://github.com/hesedcasa/bbk-cli/issues/12)) ([2276ddf](https://github.com/hesedcasa/bbk-cli/commit/2276ddf0414814345e52016916120858cb74178e))
+
 ## [1.1.2](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.1...bbk-cli-v1.1.2) (2026-01-27)
 
 
