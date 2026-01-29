@@ -25,6 +25,10 @@ vi.mock('../../../src/config/index.js', () => ({
   ],
 }));
 
+vi.mock('../../../src/utils/config-loader.js', () => ({
+  setupConfig: vi.fn(),
+}));
+
 describe('arg-parser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -302,6 +306,51 @@ describe('arg-parser', () => {
       expect(runCommand).toHaveBeenCalledTimes(commands.length);
 
       exitSpy.mockRestore();
+    });
+
+    it('should handle config command and call setupConfig', async () => {
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
+      const { setupConfig } = await import('../../../src/utils/config-loader.js');
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      vi.mocked(setupConfig).mockResolvedValue(undefined);
+
+      try {
+        await parseArguments(['config']);
+      } catch {
+        // Expected - process.exit throws
+      }
+
+      expect(setupConfig).toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(0);
+
+      exitSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should handle config command errors and exit with code 1', async () => {
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
+      const { setupConfig } = await import('../../../src/utils/config-loader.js');
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      vi.mocked(setupConfig).mockRejectedValue(new Error('Write permission denied'));
+
+      try {
+        await parseArguments(['config']);
+      } catch {
+        // Expected - process.exit throws
+      }
+
+      expect(setupConfig).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Configuration setup failed: Write permission denied');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+
+      exitSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
     });
   });
 

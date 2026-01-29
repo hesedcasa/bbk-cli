@@ -1,5 +1,6 @@
 import { getCurrentVersion, printAvailableCommands, printCommandDetail, runCommand } from '../commands/index.js';
 import { COMMANDS } from '../config/index.js';
+import { setupConfig } from './config-loader.js';
 
 /**
  * Parses and handles command line arguments
@@ -8,6 +9,18 @@ import { COMMANDS } from '../config/index.js';
  */
 export const parseArguments = async (args: string[]): Promise<boolean> => {
   for (let i = 0; i < args.length; i++) {
+    // Config setup/update command
+    if (args[i] === 'config') {
+      try {
+        await setupConfig();
+        process.exit(0);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Configuration setup failed: ${errorMessage}`);
+        process.exit(1);
+      }
+    }
+
     // Version flag
     if (args[i] === '--version' || args[i] === '-v') {
       console.log(getCurrentVersion());
@@ -56,6 +69,7 @@ Bitbucket CLI
 Usage:
 
 bbk-cli                               start interactive CLI
+bbk-cli config                        setup or update configuration
 bbk-cli --commands                    list all available commands
 bbk-cli <command> -h                  quick help on <command>
 bbk-cli <command> <arg>               run command in headless mode
@@ -65,9 +79,10 @@ All commands:
 ${COMMANDS.join(', ')}
 
 Examples:
-  bbk-cli list-repositories '{"workspace":"myworkspace"}'
-  bbk-cli get-repository '{"workspace":"myworkspace","repoSlug":"my-repo"}'
-  bbk-cli list-pullrequests '{"workspace":"myworkspace","repoSlug":"my-repo","state":"OPEN"}'
+  bbk-cli config
+  bbk-cli list-repositories
+  bbk-cli get-repository '{"repoSlug":"my-repo"}'
+  bbk-cli list-pullrequests '{"repoSlug":"my-repo","state":"OPEN"}'
   bbk-cli test-connection
 
 `);

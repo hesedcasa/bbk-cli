@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { wrapper } from '../../../src/cli/wrapper.js';
 
@@ -153,7 +153,7 @@ describe('cli/wrapper', () => {
           // Expected
         }
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load configuration:', 'Config file not found');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Config file not found');
         expect(exitSpy).toHaveBeenCalledWith(1);
 
         consoleErrorSpy.mockRestore();

@@ -89,8 +89,9 @@ function isValidEmail(email: string): boolean {
 
 /**
  * Prompt for email with validation
+ * @param currentValue - Existing email value to pre-populate in input buffer
  */
-async function promptEmail(): Promise<string> {
+async function promptEmail(currentValue?: string): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -98,8 +99,18 @@ async function promptEmail(): Promise<string> {
 
   return new Promise((resolve, reject) => {
     const ask = () => {
+      // Pre-fill existing value in input buffer for editing
+      if (currentValue) {
+        rl.write(currentValue);
+      }
       rl.question('email: ', email => {
         email = email.trim();
+        // If user presses Enter without input, keep existing value
+        if (!email && currentValue) {
+          rl.close();
+          resolve(currentValue);
+          return;
+        }
         if (!email) {
           console.log('Email is required.');
           ask();
@@ -125,8 +136,9 @@ async function promptEmail(): Promise<string> {
 
 /**
  * Prompt for api_token with hidden input
+ * @param currentValue - Existing api_token value (pre-filled as masked)
  */
-async function promptApiToken(): Promise<string> {
+async function promptApiToken(currentValue?: string): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -134,15 +146,27 @@ async function promptApiToken(): Promise<string> {
 
   return new Promise((resolve, reject) => {
     const ask = () => {
+      // Pre-fill masked value for visual indication
+      if (currentValue) {
+        rl.write('********');
+      }
       rl.question('api_token: ', apiToken => {
         apiToken = apiToken.trim();
-        if (!apiToken) {
+        // Remove all asterisks from input (user may have deleted the pre-filled mask)
+        const withoutAsterisks = apiToken.replace(/\*/g, '');
+        // If user input is empty after removing asterisks and there's an existing value, keep it
+        if (!withoutAsterisks && currentValue) {
+          rl.close();
+          resolve(currentValue);
+          return;
+        }
+        if (!withoutAsterisks) {
           console.log('API token is required.');
           ask();
           return;
         }
         rl.close();
-        resolve(apiToken);
+        resolve(withoutAsterisks);
       });
     };
 
@@ -156,18 +180,24 @@ async function promptApiToken(): Promise<string> {
 
 /**
  * Prompt for optional default workspace
+ * @param currentValue - Existing workspace value to pre-populate in input buffer
  */
-async function promptWorkspace(): Promise<string | undefined> {
+async function promptWorkspace(currentValue?: string): Promise<string | undefined> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
   return new Promise((resolve, reject) => {
+    // Pre-fill existing value in input buffer for editing
+    if (currentValue) {
+      rl.write(currentValue);
+    }
     rl.question('workspace: ', workspace => {
       workspace = workspace.trim();
       rl.close();
-      resolve(workspace || undefined);
+      // If user presses Enter without input, keep existing value or undefined
+      resolve(workspace || currentValue);
     });
 
     rl.on('error', error => {
@@ -178,8 +208,9 @@ async function promptWorkspace(): Promise<string | undefined> {
 
 /**
  * Prompt for format preference (json/toon)
+ * @param currentValue - Existing format value to pre-populate in input buffer
  */
-async function promptFormat(): Promise<'json' | 'toon'> {
+async function promptFormat(currentValue: 'json' | 'toon' = 'json'): Promise<'json' | 'toon'> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -187,11 +218,14 @@ async function promptFormat(): Promise<'json' | 'toon'> {
 
   return new Promise((resolve, reject) => {
     const ask = () => {
+      // Pre-fill existing value in input buffer for editing
+      rl.write(currentValue);
       rl.question('format: ', format => {
         format = format.trim().toLowerCase();
+        // If user presses Enter without input, keep existing value
         if (!format) {
           rl.close();
-          resolve('json');
+          resolve(currentValue);
           return;
         }
         if (format === 'json' || format === 'toon') {
@@ -215,17 +249,29 @@ async function promptFormat(): Promise<'json' | 'toon'> {
 /**
  * Interactive config setup using readline
  * Prompts user for email and api_token, then writes config file
+ * If config file exists, pre-populates existing values in input buffer
  */
 export async function setupConfig(): Promise<void> {
   const configPath = path.join(os.homedir(), '.bbkcli');
 
-  // Collect credentials
-  const email = await promptEmail();
-  const apiToken = await promptApiToken();
+  // Load existing config if it exists
+  let existingConfig: Partial<Config> = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      const content = fs.readFileSync(configPath, 'utf-8');
+      existingConfig = parseIniConfig(content);
+    } catch {
+      // Failed to read existing config file; proceed to create a new configuration.
+    }
+  }
 
-  // Optional fields
-  const defaultWorkspace = await promptWorkspace();
-  const format = await promptFormat();
+  // Collect credentials (with existing values pre-populated in input buffer)
+  const email = await promptEmail(existingConfig.email);
+  const apiToken = await promptApiToken(existingConfig.apiToken);
+
+  // Optional fields (with existing values pre-populated in input buffer)
+  const defaultWorkspace = await promptWorkspace(existingConfig.defaultWorkspace);
+  const format = await promptFormat(existingConfig.defaultFormat);
 
   // Write config file
   let configContent = `[auth]
@@ -245,12 +291,10 @@ api_token=${apiToken}
 
   try {
     fs.writeFileSync(configPath, configContent, { mode: 0o600 }); // Read/write for owner only
-    console.log(`\n✓ Configuration saved to ${configPath}`);
+    console.log(`\n✓ Config saved to ${configPath}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Failed to write config file: ${errorMessage}\n\nMake sure you have permission to write to ${configPath}`
-    );
+    throw new Error(`Cannot write config: ${errorMessage}`);
   }
 }
 
@@ -264,9 +308,7 @@ export function loadConfig(): Config {
   const configPath = path.join(os.homedir(), '.bbkcli');
 
   if (!fs.existsSync(configPath)) {
-    throw new Error(
-      `Configuration file not found at ${configPath}\n\nTo fix this issue:\n  Run: bbk-cli config\n  This will start the interactive configuration setup.`
-    );
+    throw new Error(`Please run: bbk-cli config`);
   }
 
   let content: string;
@@ -274,26 +316,19 @@ export function loadConfig(): Config {
     content = fs.readFileSync(configPath, 'utf-8');
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Failed to read configuration file at ${configPath}: ${errorMessage}\n\nCheck file permissions and try again.`
-    );
+    throw new Error(`Cannot read config: ${errorMessage}`);
   }
 
   const config = parseIniConfig(content);
 
   // Validate required fields (should be valid after setup, but double-check)
   if (!config.email || !config.apiToken) {
-    throw new Error(
-      `Configuration must include both "email" and "api_token" in the [auth] section\n\n` +
-        `Current configuration file: ${configPath}`
-    );
+    throw new Error(`Missing "email" or "api_token" in ${configPath}`);
   }
 
   // Validate email format
   if (!isValidEmail(config.email)) {
-    throw new Error(
-      `Invalid email format: "${config.email}"\n\n` + `Please check your configuration file at: ${configPath}`
-    );
+    throw new Error(`Invalid email: ${config.email} in ${configPath}`);
   }
 
   return {

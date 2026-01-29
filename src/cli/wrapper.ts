@@ -48,10 +48,7 @@ export class wrapper {
       this.printHelp();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('Failed to load configuration:', errorMessage);
-      console.error('\nTo fix this issue:');
-      console.error('  Run: bbk-cli config');
-      console.error('  This will start the interactive configuration setup.');
+      console.error(errorMessage);
       process.exit(1);
     }
   }

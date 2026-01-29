@@ -14,6 +14,7 @@ const mockRlInterface = {
   question: mockQuestion,
   close: mockClose,
   on: mockOn,
+  write: vi.fn(),
 };
 
 // Mock readline at module level
@@ -328,7 +329,7 @@ format=json
         .mockImplementationOnce((_, callback) => callback('ws'))
         .mockImplementationOnce((_, callback) => callback('json'));
 
-      await expect(setupConfig()).rejects.toThrow('Failed to write config file');
+      await expect(setupConfig()).rejects.toThrow('Cannot write config');
     });
 
     it('should include defaults section when only format is specified', async () => {
@@ -380,6 +381,113 @@ format=json
 
       // 0o600 = read/write for owner only (rw-------)
       expect(mode).toBe(0o600);
+    });
+
+    it('should pre-populate existing config values when user presses Enter for all fields', async () => {
+      // Create existing config
+      const existingConfig = `[auth]
+email=old@example.com
+api_token=old_token_123
+
+[defaults]
+workspace=old_workspace
+format=toon
+`;
+      const configPath = path.join(testConfigDir, '.bbkcli');
+      fs.writeFileSync(configPath, existingConfig);
+
+      // User presses Enter for all prompts (accepts existing values)
+      mockQuestion
+        .mockImplementationOnce((_, callback) => callback('')) // keep email
+        .mockImplementationOnce((_, callback) => callback('')) // keep token
+        .mockImplementationOnce((_, callback) => callback('')) // keep workspace
+        .mockImplementationOnce((_, callback) => callback('')); // keep format
+
+      await setupConfig();
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      expect(content).toContain('email=old@example.com');
+      expect(content).toContain('api_token=old_token_123');
+      expect(content).toContain('workspace=old_workspace');
+      expect(content).toContain('format=toon');
+    });
+
+    it('should pre-populate and update individual fields while keeping others', async () => {
+      // Create existing config with toon format (non-default)
+      const existingConfig = `[auth]
+email=old@example.com
+api_token=old_token_123
+
+[defaults]
+workspace=old_workspace
+format=toon
+`;
+      const configPath = path.join(testConfigDir, '.bbkcli');
+      fs.writeFileSync(configPath, existingConfig);
+
+      // User updates email and workspace but keeps token and format
+      mockQuestion
+        .mockImplementationOnce((_, callback) => callback('new@example.com')) // new email
+        .mockImplementationOnce((_, callback) => callback('')) // keep token
+        .mockImplementationOnce((_, callback) => callback('new_workspace')) // new workspace
+        .mockImplementationOnce((_, callback) => callback('')); // keep format
+
+      await setupConfig();
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      expect(content).toContain('email=new@example.com');
+      expect(content).toContain('api_token=old_token_123');
+      expect(content).toContain('workspace=new_workspace');
+      expect(content).toContain('format=toon');
+    });
+
+    it('should handle corrupted existing config file gracefully', async () => {
+      // Create a corrupted existing config
+      const configPath = path.join(testConfigDir, '.bbkcli');
+      fs.writeFileSync(configPath, 'this is not valid INI at all {{{');
+
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // User provides new values
+      mockQuestion
+        .mockImplementationOnce((_, callback) => callback('fresh@example.com'))
+        .mockImplementationOnce((_, callback) => callback('fresh_token'))
+        .mockImplementationOnce((_, callback) => callback('fresh_workspace'))
+        .mockImplementationOnce((_, callback) => callback('json'));
+
+      await setupConfig();
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      expect(content).toContain('email=fresh@example.com');
+      expect(content).toContain('api_token=fresh_token');
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should preserve api_token when user deletes asterisks and presses Enter', async () => {
+      // Create existing config
+      const existingConfig = `[auth]
+email=test@example.com
+api_token=existing_token
+
+[defaults]
+format=json
+`;
+      const configPath = path.join(testConfigDir, '.bbkcli');
+      fs.writeFileSync(configPath, existingConfig);
+
+      // User keeps email, deletes all asterisks (backspaces) and presses Enter to keep token
+      mockQuestion
+        .mockImplementationOnce((_, callback) => callback('')) // keep email
+        .mockImplementationOnce((_, callback) => callback('')) // deleted asterisks, keep token
+        .mockImplementationOnce((_, callback) => callback('')) // no workspace
+        .mockImplementationOnce((_, callback) => callback('')); // keep format
+
+      await setupConfig();
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      expect(content).toContain('email=test@example.com');
+      expect(content).toContain('api_token=existing_token');
     });
   });
 });
