@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.2.0...bbk-cli-v1.2.1) (2026-03-02)
+
+
+### ♻️ Chores
+
+* improve test helpers with real config constants ([#21](https://github.com/hesedcasa/bbk-cli/issues/21)) ([eaafa4b](https://github.com/hesedcasa/bbk-cli/commit/eaafa4b879e61e999896e88ae5cfaa01a62556dd))
+
 ## [1.2.0](https://github.com/hesedcasa/bbk-cli/compare/bbk-cli-v1.1.3...bbk-cli-v1.2.0) (2026-01-29)
 
 
