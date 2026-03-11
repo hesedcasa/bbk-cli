@@ -33,7 +33,7 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^10.0.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.0",
     "@types/node": "^25.0.10",
     "@vitest/coverage-v8": "^4.0.18",
